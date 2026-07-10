@@ -1,45 +1,78 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 
-export default function ProductCard({ id, image, name, price }) {
+export default function ProductCard({
+  id,
+  image,
+  name,
+  price,
+  category = "Handmade",
+  bestseller = false,
+}) {
   const { addToCart } = useCart();
 
-  const product = { id, image, name, price };
+  const product = {
+    id,
+    image,
+    name,
+    price,
+    category,
+    bestseller,
+  };
 
   return (
-    <div className="group bg-white rounded-[30px] overflow-hidden shadow-lg hover:shadow-2xl duration-500">
-      <Link to={`/product/${id}`}>
-        <div className="relative overflow-hidden">
-          <img
-            src={image}
-            alt={name}
-            className="h-[380px] w-full object-cover group-hover:scale-110 duration-700"
-          />
+    <div className="group overflow-hidden rounded-[30px] bg-white shadow-md transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
+      <div className="relative overflow-hidden">
+        <img
+          src={image}
+          alt={name}
+          className="h-[360px] w-full object-cover transition duration-700 group-hover:scale-110"
+        />
 
-          <button className="absolute top-5 right-5 bg-white w-12 h-12 rounded-full shadow-lg opacity-0 group-hover:opacity-100 duration-300">
-            ♡
-          </button>
+        {bestseller && (
+          <span className="absolute left-5 top-5 rounded-full bg-primary px-4 py-2 text-xs uppercase tracking-[0.2em] text-white">
+            Bestseller
+          </span>
+        )}
+
+        <div className="absolute inset-0 flex items-end justify-center bg-black/30 opacity-0 transition duration-500 group-hover:opacity-100">
+          <div className="mb-6 flex gap-3">
+            <button
+              type="button"
+              onClick={() => addToCart(product)}
+              className="rounded-full bg-white px-6 py-3 text-sm font-medium text-primary transition hover:bg-primary hover:text-white"
+            >
+              Add to Cart
+            </button>
+
+            <Link
+              to={`/product/${id}`}
+              className="rounded-full border border-white px-6 py-3 text-sm text-white transition hover:bg-white hover:text-primary"
+            >
+              View
+            </Link>
+          </div>
         </div>
+      </div>
 
-        <div className="p-6">
-          <h3 className="text-2xl font-semibold text-[#6B4F3A]">
-            {name}
-          </h3>
+      <div className="p-6">
+        <p className="text-xs uppercase tracking-[0.3em] text-secondary">
+          {category}
+        </p>
 
-          <p className="mt-2 text-[#A67C52] text-lg">{price}</p>
+        <h3 className="mt-3 font-heading text-2xl font-semibold text-primary">
+          {name}
+        </h3>
+
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-xl font-semibold text-primary">
+            {price}
+          </p>
+
+          <span className="text-sm text-[#8A7B70]">
+            Handmade
+          </span>
         </div>
-      </Link>
-
-      <div className="px-6 pb-6">
-        <button
-          onClick={() => {
-  addToCart(product);
-  alert(`${name} added to cart`);
-}}
-          className="w-full bg-[#6B4F3A] text-white py-3 rounded-full hover:bg-[#4E3829] duration-300"
-        >
-          Add to Cart
-        </button>
       </div>
     </div>
   );

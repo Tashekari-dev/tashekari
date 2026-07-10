@@ -1,8 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap");
 
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #6B4F3A;
+  --color-secondary: #A67C52;
+  --color-background: #F8F5F1;
+  --color-cream: #F3ECE4;
+  --color-light: #E9DCCF;
+
+  --font-heading: "Cormorant Garamond", serif;
+  --font-body: "Poppins", sans-serif;
+}
+
 body {
-  font-family: 'Poppins', sans-serif;
-  background-color: #F8F5F1;
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-background);
+  color: #2B2B2B;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
 }

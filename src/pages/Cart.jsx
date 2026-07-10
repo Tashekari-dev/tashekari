@@ -1,5 +1,6 @@
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import { Link } from "react-router-dom";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
 
 export default function Cart() {
@@ -110,10 +111,11 @@ export default function Cart() {
 
                 </div>
 
-                <button className="mt-8 w-full bg-[#6B4F3A] text-white py-4 rounded-full text-lg hover:bg-[#4E3829] duration-300">
-                  Proceed To Checkout
-                </button>
-
+               <Link to="/checkout">
+  <button className="mt-8 w-full bg-[#6B4F3A] text-white py-4 rounded-full text-lg hover:bg-[#4E3829] duration-300">
+    Proceed To Checkout
+  </button>
+</Link>
               </div>
             </>
           )}

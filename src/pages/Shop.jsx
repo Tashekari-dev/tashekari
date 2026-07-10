@@ -1,9 +1,10 @@
 import { useState } from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import ProductCard from "../components/common/ProductCard";
-import { products } from "../data/products";
 
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
+import ProductCard from "../components/common/ProductCard";
+
+import { products } from "../data/products";
 export default function Shop() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");

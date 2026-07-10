@@ -1,20 +1,30 @@
-import Navbar from "../components/Navbar";
-import Hero from "../components/Hero";
-import Categories from "../components/Categories";
-import FeaturedProducts from "../components/FeaturedProducts";
-import WhyChooseUs from "../components/WhyChooseUs";
-import About from "../components/About";
-import Footer from "../components/Footer";
+import Testimonials from "../components/home/Testimonials";
+import VideoBanner from "../components/home/VideoBanner";
+import InstagramGallery from "../components/home/InstagramGallery";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
 
+import Hero from "../components/home/Hero";
+import Categories from "../components/home/Categories";
+import FeaturedProducts from "../components/home/FeaturedProducts";
+import WhyChooseUs from "../components/home/WhyChooseUs";
+import About from "../components/home/About";
+import BrandStory from "../components/home/BrandStory";
+import Newsletter from "../components/home/Newsletter";
 export default function Home() {
   return (
     <>
       <Navbar />
       <Hero />
+      <BrandStory />
+      <VideoBanner />
+      <InstagramGallery />
+      <Testimonials />
       <Categories />
       <FeaturedProducts />
       <WhyChooseUs />
       <About />
+      <Newsletter />
       <Footer />
     </>
   );
