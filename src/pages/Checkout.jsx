@@ -1,68 +1,448 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
 
 export default function Checkout() {
+  const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
 
-  const total = cartItems.reduce((sum, item) => {
-    const price = Number(item.price.replace(/[₹,]/g, ""));
-    return sum + price * item.quantity;
-  }, 0);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [error, setError] = useState("");
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
+
+  function getPriceNumber(price) {
+    return Number(String(price).replace(/[₹,\s]/g, ""));
+  }
+
+  const subtotal = cartItems.reduce(
+    (total, item) =>
+      total + getPriceNumber(item.price) * item.quantity,
+    0
+  );
+
+  const shipping = subtotal >= 1999 || subtotal === 0 ? 0 : 99;
+  const finalTotal = subtotal + shipping;
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+
+    if (cartItems.length === 0) {
+      setError("Your cart is empty. Please add a product first.");
+      return;
+    }
+
+    if (
+      !formData.fullName.trim() ||
+      !formData.phone.trim() ||
+      !formData.email.trim() ||
+      !formData.address.trim() ||
+      !formData.city.trim() ||
+      !formData.state.trim() ||
+      !formData.pincode.trim()
+    ) {
+      setError("Please fill all shipping details.");
+      return;
+    }
+
+    if (!/^[6-9]\d{9}$/.test(formData.phone)) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(formData.pincode)) {
+      setError("Please enter a valid 6-digit pincode.");
+      return;
+    }
+
+    if (paymentMethod === "online") {
+      alert("Online payment gateway will be connected in the next step.");
+      return;
+    }
+
+    clearCart();
+    navigate("/order-success");
+  }
 
   return (
     <>
       <Navbar />
 
-      <section className="pt-36 pb-20 bg-[#F8F5F1] min-h-screen">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12">
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <h1 className="text-4xl font-bold text-[#6B4F3A] mb-8">
-              Shipping Details
-            </h1>
+      <main className="min-h-screen bg-background pt-28">
+        <section className="border-b border-primary/10 px-6 py-14 text-center">
+          <p className="font-body text-xs uppercase tracking-[0.4em] text-secondary">
+            Secure Checkout
+          </p>
 
-            <div className="grid gap-5">
-              <input className="border rounded-full px-6 py-4" placeholder="Full Name" />
-              <input className="border rounded-full px-6 py-4" placeholder="Phone Number" />
-              <input className="border rounded-full px-6 py-4" placeholder="Email Address" />
-              <textarea className="border rounded-3xl px-6 py-4" rows="4" placeholder="Full Address"></textarea>
-              <input className="border rounded-full px-6 py-4" placeholder="City" />
-              <input className="border rounded-full px-6 py-4" placeholder="Pincode" />
-            </div>
-          </div>
+          <h1 className="mt-5 font-heading text-6xl font-semibold text-primary">
+            Complete Your Order
+          </h1>
 
-          <div className="bg-white rounded-3xl p-8 shadow h-fit">
-            <h2 className="text-4xl font-bold text-[#6B4F3A] mb-8">
-              Order Summary
-            </h2>
+          <p className="mx-auto mt-4 max-w-2xl font-body leading-8 text-[#75695F]">
+            Enter your delivery details and review your handmade Tashekari
+            collection before placing the order.
+          </p>
+        </section>
 
-            {cartItems.map((item) => (
-              <div key={item.id} className="flex justify-between border-b pb-4 mb-4">
-                <div>
-                  <h3 className="font-semibold text-[#6B4F3A]">{item.name}</h3>
-                  <p className="text-gray-500">Qty: {item.quantity}</p>
+        <section className="py-16">
+          <form
+            onSubmit={handleSubmit}
+            className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[1fr_420px] lg:px-10"
+          >
+            <motion.div
+              initial={{ opacity: 0, x: -35 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="space-y-8"
+            >
+              <div className="rounded-[36px] bg-white p-7 shadow-lg sm:p-10">
+                <p className="font-body text-xs uppercase tracking-[0.35em] text-secondary">
+                  Step 01
+                </p>
+
+                <h2 className="mt-4 font-heading text-4xl font-semibold text-primary">
+                  Contact Information
+                </h2>
+
+                <div className="mt-8 grid gap-5 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block font-body text-sm font-medium text-primary">
+                      Full Name
+                    </label>
+
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      placeholder="Enter your full name"
+                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-body text-sm font-medium text-primary">
+                      Phone Number
+                    </label>
+
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="10-digit phone number"
+                      maxLength="10"
+                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-body text-sm font-medium text-primary">
+                      Email Address
+                    </label>
+
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+                    />
+                  </div>
                 </div>
-                <p className="text-[#A67C52]">{item.price}</p>
               </div>
-            ))}
 
-            <div className="flex justify-between text-2xl font-bold text-[#6B4F3A] mt-8">
-              <span>Total</span>
-              <span>₹ {total.toLocaleString()}</span>
-            </div>
+              <div className="rounded-[36px] bg-white p-7 shadow-lg sm:p-10">
+                <p className="font-body text-xs uppercase tracking-[0.35em] text-secondary">
+                  Step 02
+                </p>
 
-            <Link to="/order-success">
+                <h2 className="mt-4 font-heading text-4xl font-semibold text-primary">
+                  Shipping Address
+                </h2>
+
+                <div className="mt-8 grid gap-5 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block font-body text-sm font-medium text-primary">
+                      Full Address
+                    </label>
+
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      rows="4"
+                      placeholder="House number, street and locality"
+                      className="w-full resize-none rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-body text-sm font-medium text-primary">
+                      City
+                    </label>
+
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      placeholder="City"
+                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-body text-sm font-medium text-primary">
+                      State
+                    </label>
+
+                    <input
+                      type="text"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                      placeholder="State"
+                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block font-body text-sm font-medium text-primary">
+                      Pincode
+                    </label>
+
+                    <input
+                      type="text"
+                      name="pincode"
+                      value={formData.pincode}
+                      onChange={handleChange}
+                      placeholder="6-digit pincode"
+                      maxLength="6"
+                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[36px] bg-white p-7 shadow-lg sm:p-10">
+                <p className="font-body text-xs uppercase tracking-[0.35em] text-secondary">
+                  Step 03
+                </p>
+
+                <h2 className="mt-4 font-heading text-4xl font-semibold text-primary">
+                  Payment Method
+                </h2>
+
+                <div className="mt-8 grid gap-4">
+                  <label
+                    className={`cursor-pointer rounded-2xl border p-5 transition ${
+                      paymentMethod === "cod"
+                        ? "border-primary bg-background"
+                        : "border-primary/10"
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="cod"
+                        checked={paymentMethod === "cod"}
+                        onChange={(event) =>
+                          setPaymentMethod(event.target.value)
+                        }
+                        className="mt-1"
+                      />
+
+                      <div>
+                        <h3 className="font-body font-semibold text-primary">
+                          Cash on Delivery
+                        </h3>
+
+                        <p className="mt-1 font-body text-sm text-[#75695F]">
+                          Pay when your Tashekari order arrives.
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`cursor-pointer rounded-2xl border p-5 transition ${
+                      paymentMethod === "online"
+                        ? "border-primary bg-background"
+                        : "border-primary/10"
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="online"
+                        checked={paymentMethod === "online"}
+                        onChange={(event) =>
+                          setPaymentMethod(event.target.value)
+                        }
+                        className="mt-1"
+                      />
+
+                      <div>
+                        <h3 className="font-body font-semibold text-primary">
+                          Online Payment
+                        </h3>
+
+                        <p className="mt-1 font-body text-sm text-[#75695F]">
+                          UPI, cards and net banking through Razorpay.
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.aside
+              initial={{ opacity: 0, x: 35 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="h-fit rounded-[36px] bg-white p-7 shadow-xl lg:sticky lg:top-28"
+            >
+              <h2 className="font-heading text-4xl font-semibold text-primary">
+                Order Summary
+              </h2>
+
+              {cartItems.length === 0 ? (
+                <div className="mt-8 rounded-2xl bg-background p-6 text-center">
+                  <p className="font-body text-[#75695F]">
+                    Your cart is currently empty.
+                  </p>
+
+                  <Link
+                    to="/shop"
+                    className="mt-5 inline-block font-body text-sm font-semibold text-secondary"
+                  >
+                    Go To Shop →
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-8 max-h-[360px] space-y-5 overflow-y-auto pr-2">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex gap-4 border-b border-primary/10 pb-5"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-20 w-20 rounded-2xl object-cover"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-heading text-xl font-semibold text-primary">
+                          {item.name}
+                        </h3>
+
+                        <p className="mt-1 font-body text-xs text-[#817267]">
+                          Quantity: {item.quantity}
+                        </p>
+
+                        <p className="mt-2 font-body font-semibold text-secondary">
+                          ₹
+                          {(
+                            getPriceNumber(item.price) * item.quantity
+                          ).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-8 space-y-4 border-b border-primary/10 pb-7 font-body">
+                <div className="flex justify-between text-[#75695F]">
+                  <span>Subtotal</span>
+                  <span>₹{subtotal.toLocaleString()}</span>
+                </div>
+
+                <div className="flex justify-between text-[#75695F]">
+                  <span>Shipping</span>
+                  <span>
+                    {shipping === 0
+                      ? "Free"
+                      : `₹${shipping.toLocaleString()}`}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-7 flex items-center justify-between">
+                <span className="font-heading text-3xl font-semibold text-primary">
+                  Total
+                </span>
+
+                <span className="font-heading text-3xl font-semibold text-primary">
+                  ₹{finalTotal.toLocaleString()}
+                </span>
+              </div>
+
+              {error && (
+                <p className="mt-5 rounded-2xl bg-red-50 px-4 py-3 font-body text-sm text-red-600">
+                  {error}
+                </p>
+              )}
+
               <button
-                onClick={clearCart}
-                className="mt-8 w-full bg-[#6B4F3A] text-white py-4 rounded-full hover:bg-[#4E3829] duration-300"
+                type="submit"
+                disabled={cartItems.length === 0}
+                className="mt-8 w-full rounded-full bg-primary py-5 font-body font-medium text-white shadow-lg transition hover:-translate-y-1 hover:bg-[#4E3829] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Place Order
+                {paymentMethod === "cod"
+                  ? "Place COD Order"
+                  : "Proceed To Payment"}
               </button>
-            </Link>
-          </div>
-        </div>
-      </section>
+
+              <Link
+                to="/cart"
+                className="mt-4 block text-center font-body text-sm font-medium text-secondary transition hover:text-primary"
+              >
+                ← Back To Cart
+              </Link>
+
+              <div className="mt-7 space-y-3 font-body text-xs text-[#817267]">
+                <p>✓ Secure checkout</p>
+                <p>✓ Carefully packed handmade products</p>
+                <p>✓ Free shipping above ₹1,999</p>
+              </div>
+            </motion.aside>
+          </form>
+        </section>
+      </main>
 
       <Footer />
     </>
