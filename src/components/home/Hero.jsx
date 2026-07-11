@@ -6,22 +6,23 @@ import bag13 from "../../assets/products/bag13.jpeg";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-background pt-32 pb-20 lg:min-h-screen">
+    <section className="relative min-h-screen overflow-hidden bg-background pt-32 pb-20">
       <div className="absolute -left-40 top-24 h-96 w-96 rounded-full bg-light/70 blur-[130px]" />
+
       <div className="absolute -right-32 bottom-10 h-96 w-96 rounded-full bg-secondary/20 blur-[140px]" />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-10">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-20 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
         <motion.div
-          initial={{ opacity: 0, x: -50 }}
+          initial={{ opacity: 0, x: -60 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
           className="relative z-10"
         >
-          <p className="font-body text-xs uppercase tracking-[0.42em] text-secondary md:text-sm">
+          <p className="text-xs uppercase tracking-[0.45em] text-secondary md:text-sm">
             Handmade • Sustainable • Timeless
           </p>
 
-          <h1 className="mt-7 font-heading text-6xl font-semibold leading-[0.92] text-primary sm:text-7xl lg:text-[96px]">
+          <h1 className="mt-7 font-heading text-6xl font-semibold leading-[0.9] text-primary sm:text-7xl lg:text-[104px]">
             Crafted
             <span className="block italic text-secondary">with love.</span>
           </h1>
@@ -78,28 +79,28 @@ export default function Hero() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, delay: 0.15 }}
-          className="relative min-h-[570px] md:min-h-[680px]"
+          className="relative min-h-[620px] md:min-h-[760px]"
         >
-          <div className="absolute right-0 top-0 h-[500px] w-[84%] overflow-hidden rounded-[42px] shadow-2xl md:h-[620px]">
+          <div className="absolute right-6 top-0 h-[540px] w-[82%] overflow-hidden rounded-[42px] shadow-[0_30px_80px_rgba(0,0,0,0.18)] md:h-[680px]">
             <img
               src={bag12}
-              alt="Tashekari navy macrame bag"
+              alt="Tashekari handmade navy macrame bag"
               className="h-full w-full object-cover transition duration-700 hover:scale-105"
             />
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 45 }}
+            initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
-            className="absolute bottom-0 left-0 h-[260px] w-[48%] overflow-hidden rounded-[30px] border-[8px] border-background shadow-2xl md:h-[325px]"
+            transition={{ duration: 0.7, delay: 0.55 }}
+            className="absolute bottom-4 left-0 h-[280px] w-[48%] overflow-hidden rounded-[30px] border-[8px] border-background shadow-[0_25px_60px_rgba(0,0,0,0.18)] md:h-[350px]"
           >
             <img
               src={bag13}
-              alt="Handcrafted Tashekari collection"
+              alt="Handcrafted Tashekari macrame bag"
               className="h-full w-full object-cover"
             />
           </motion.div>
@@ -111,9 +112,9 @@ export default function Hero() {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute bottom-16 right-2 max-w-[250px] rounded-3xl bg-white/90 px-6 py-5 shadow-xl backdrop-blur-xl md:right-8"
+            className="absolute bottom-20 right-6 max-w-[280px] rounded-3xl border border-white/40 bg-white/90 px-6 py-5 shadow-2xl backdrop-blur-xl"
           >
-            <p className="font-body text-xs uppercase tracking-[0.25em] text-secondary">
+            <p className="text-xs uppercase tracking-[0.25em] text-secondary">
               Made by hand
             </p>
 
