@@ -4,6 +4,30 @@ import { Link } from "react-router-dom";
 import { products } from "../../data/products";
 import ProductCard from "../common/ProductCard";
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: {
+    opacity: 0,
+    y: 50,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.65,
+      ease: "easeOut",
+    },
+  },
+};
+
 export default function FeaturedProducts() {
   const featuredProducts = products
     .filter((product) => product.featured)
@@ -15,8 +39,8 @@ export default function FeaturedProducts() {
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          viewport={{ once: true, amount: 0.25 }}
           className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between"
         >
           <div>
@@ -42,14 +66,18 @@ export default function FeaturedProducts() {
           </Link>
         </motion.div>
 
-        <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {featuredProducts.map((product, index) => (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+          className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {featuredProducts.map((product) => (
             <motion.div
               key={product.id}
-              initial={{ opacity: 0, y: 45 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.08 }}
-              viewport={{ once: true }}
+              variants={itemVariants}
+              whileHover={{ y: -8 }}
             >
               <ProductCard
                 id={product.id}
@@ -61,7 +89,7 @@ export default function FeaturedProducts() {
               />
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

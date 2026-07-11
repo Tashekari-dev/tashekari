@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import AnnouncementBar from "./AnnouncementBar";
 
 export default function Navbar() {
   const { cartItems } = useCart();
@@ -31,13 +32,16 @@ export default function Navbar() {
     }`;
 
   return (
+  <>
     <header
       className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
         scrolled
           ? "border-primary/10 bg-background/95 shadow-[0_8px_30px_rgba(107,79,58,0.08)] backdrop-blur-xl"
           : "border-transparent bg-background/90 backdrop-blur-lg"
-      }`}
+            }`}
     >
+      <AnnouncementBar />
+
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 md:py-5 lg:px-10">
         <Link
           to="/"
@@ -191,6 +195,7 @@ export default function Navbar() {
           </Link>
         </div>
       </div>
-    </header>
-  );
+   </header>
+</>
+);
 }
