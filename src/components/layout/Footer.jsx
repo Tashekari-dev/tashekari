@@ -1,4 +1,6 @@
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import logo from "../../assets/logo/logo.png";
 
 export default function Footer() {
   function scrollToTop() {
@@ -19,12 +21,20 @@ export default function Footer() {
       <div className="relative mx-auto max-w-7xl px-6 py-20 lg:px-10">
         <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1fr]">
           <div>
-            <Link
-              to="/"
-              className="font-heading text-5xl font-semibold tracking-wide md:text-6xl"
-            >
-              Tashekari
-            </Link>
+           <Link
+  to="/"
+  className="inline-flex items-center gap-4"
+>
+  <img
+    src={logo}
+    alt="Tashekari logo"
+    className="h-16 w-16 object-contain"
+  />
+
+  <span className="font-heading text-4xl font-semibold tracking-wide md:text-5xl">
+    Tashekari
+  </span>
+</Link>
 
             <p className="mt-6 max-w-md font-body leading-8 text-white/65">
               Thoughtfully handcrafted macrame pieces made with love,
@@ -37,23 +47,23 @@ export default function Footer() {
 
             <div className="mt-8 flex gap-3">
               <a
-                href="https://instagram.com"
+                href="https://instagram.com/tashekari"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 font-body text-xs transition duration-300 hover:-translate-y-1 hover:bg-white hover:text-[#2F2118]"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:text-[#2F2118]"
               >
-                IG
+                <FaInstagram size={20} />
               </a>
 
               <a
-                href="https://wa.me/"
+                href="https://wa.me/919876543210"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="WhatsApp"
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 font-body text-xs transition duration-300 hover:-translate-y-1 hover:bg-white hover:text-[#2F2118]"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:text-[#2F2118]"
               >
-                WA
+                <FaWhatsapp size={20} />
               </a>
             </div>
           </div>

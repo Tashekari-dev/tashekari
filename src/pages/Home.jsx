@@ -1,3 +1,4 @@
+import PageTransition from "../components/common/PageTransition";
 import Testimonials from "../components/home/Testimonials";
 import VideoBanner from "../components/home/VideoBanner";
 import InstagramGallery from "../components/home/InstagramGallery";
@@ -14,6 +15,7 @@ import Newsletter from "../components/home/Newsletter";
 export default function Home() {
   return (
     <>
+      <PageTransition>
       <Navbar />
       <Hero />
       <BrandStory />
@@ -26,6 +28,7 @@ export default function Home() {
       <About />
       <Newsletter />
       <Footer />
+      </PageTransition>
     </>
   );
 }
