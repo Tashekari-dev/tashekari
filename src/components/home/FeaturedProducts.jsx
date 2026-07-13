@@ -1,47 +1,38 @@
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 import { products } from "../../data/products";
 import ProductCard from "../common/ProductCard";
 
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.12,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: {
-    opacity: 0,
-    y: 50,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.65,
-      ease: "easeOut",
-    },
-  },
-};
-
 export default function FeaturedProducts() {
-  const featuredProducts = products
-    .filter((product) => product.featured)
-    .slice(0, 6);
+  const sliderRef = useRef(null);
+
+  const featuredProducts = products.filter(
+    (product) => product.featured
+  );
+
+  function scrollSlider(direction) {
+    if (!sliderRef.current) return;
+
+    const scrollAmount = sliderRef.current.clientWidth * 0.85;
+
+    sliderRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  }
 
   return (
-    <section className="bg-background py-28">
+    <section className="overflow-hidden bg-background py-24 md:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.25 }}
-          className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between"
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true }}
+          className="flex flex-col gap-7 md:flex-row md:items-end md:justify-between"
         >
           <div>
             <p className="font-body text-xs uppercase tracking-[0.38em] text-secondary">
@@ -58,26 +49,49 @@ export default function FeaturedProducts() {
             </p>
           </div>
 
-          <Link
-            to="/shop"
-            className="w-fit rounded-full border border-primary px-7 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:bg-primary hover:text-white"
-          >
-            View All Products
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => scrollSlider("left")}
+              aria-label="View previous products"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 text-primary transition duration-300 hover:-translate-y-1 hover:bg-primary hover:text-white"
+            >
+              <FaArrowLeft size={15} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => scrollSlider("right")}
+              aria-label="View next products"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition duration-300 hover:-translate-y-1 hover:bg-[#4E3829]"
+            >
+              <FaArrowRight size={15} />
+            </button>
+
+            <Link
+              to="/shop"
+              className="ml-2 hidden rounded-full border border-primary px-7 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:bg-primary hover:text-white sm:block"
+            >
+              View All
+            </Link>
+          </div>
         </motion.div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
-          className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
+        <div
+          ref={sliderRef}
+          className="mt-14 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {featuredProducts.map((product) => (
+          {featuredProducts.map((product, index) => (
             <motion.div
               key={product.id}
-              variants={itemVariants}
-              whileHover={{ y: -8 }}
+              initial={{ opacity: 0, y: 45 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.6,
+                delay: index * 0.08,
+              }}
+              viewport={{ once: true }}
+              className="min-w-[86%] snap-start sm:min-w-[47%] lg:min-w-[31.5%]"
             >
               <ProductCard
                 id={product.id}
@@ -89,7 +103,14 @@ export default function FeaturedProducts() {
               />
             </motion.div>
           ))}
-        </motion.div>
+        </div>
+
+        <Link
+          to="/shop"
+          className="mx-auto mt-2 block w-fit rounded-full border border-primary px-8 py-4 font-body text-sm font-medium text-primary transition hover:bg-primary hover:text-white sm:hidden"
+        >
+          View All Products
+        </Link>
       </div>
     </section>
   );

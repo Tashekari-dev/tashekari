@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { FaWhatsapp, FaLink } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 import { products } from "../data/products";
@@ -11,23 +12,71 @@ import ProductCard from "../components/common/ProductCard";
 
 export default function Product() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addToCart } = useCart();
 
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [activeTab, setActiveTab] = useState("description");
 
   const product = products.find((item) => item.id === Number(id));
 
-  const relatedProducts = useMemo(() => {
-    if (!product) return [];
+const relatedProducts = useMemo(() => {
+  if (!product) return [];
 
-    return products
-      .filter(
-        (item) =>
-          item.category === product.category && item.id !== product.id
-      )
+  return products
+    .filter(
+      (item) =>
+        item.category === product.category &&
+        item.id !== product.id
+    )
+    .slice(0, 3);
+}, [product]);
+
+const recentProducts = useMemo(() => {
+  if (!product) return [];
+
+  try {
+    const savedProducts = localStorage.getItem("recent-products");
+    const viewedProducts = savedProducts
+      ? JSON.parse(savedProducts)
+      : [];
+
+    return viewedProducts
+      .filter((item) => item.id !== product.id)
       .slice(0, 3);
-  }, [product]);
+  } catch (error) {
+    console.error("Recently viewed products error:", error);
+    return [];
+  }
+}, [product]);
+
+useEffect(() => {
+  if (!product) return;
+
+  try {
+    const savedProducts = localStorage.getItem("recent-products");
+    const viewedProducts = savedProducts
+      ? JSON.parse(savedProducts)
+      : [];
+
+    const filteredProducts = viewedProducts.filter(
+      (item) => item.id !== product.id
+    );
+
+    const updatedProducts = [
+      product,
+      ...filteredProducts,
+    ].slice(0, 6);
+
+    localStorage.setItem(
+      "recent-products",
+      JSON.stringify(updatedProducts)
+    );
+  } catch (error) {
+    console.error("Unable to save recently viewed products:", error);
+  }
+}, [product]);
 
   function handleAddToCart() {
     for (let count = 0; count < quantity; count += 1) {
@@ -40,6 +89,40 @@ export default function Product() {
       setAdded(false);
     }, 1800);
   }
+
+  function handleBuyNow() {
+    for (let count = 0; count < quantity; count += 1) {
+      addToCart(product);
+    }
+
+    navigate("/checkout");
+  }
+  function shareWhatsApp() {
+  const url = window.location.href;
+
+  const message = `Check out this handmade product from Tashekari ❤️
+
+${product.name}
+${product.price}
+
+${url}`;
+
+  window.open(
+    `https://wa.me/?text=${encodeURIComponent(message)}`,
+    "_blank",
+    "noopener,noreferrer"
+  );
+}
+
+async function copyLink() {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    alert("Product link copied successfully.");
+  } catch (error) {
+    console.error("Unable to copy product link:", error);
+    alert("Unable to copy the link. Please copy it from the address bar.");
+  }
+}
 
   if (!product) {
     return (
@@ -219,22 +302,218 @@ export default function Product() {
                   {added ? "Added To Cart ✓" : "Add To Cart"}
                 </button>
 
-                <Link
-                  to="/cart"
-                  className="mt-4 block w-full rounded-full border border-primary py-5 text-center font-body text-base font-medium text-primary transition hover:bg-primary hover:text-white"
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  className="mt-4 w-full rounded-full border border-primary py-5 text-center font-body text-base font-medium text-primary transition hover:bg-primary hover:text-white"
                 >
-                  View Cart
-                </Link>
+                  Buy Now
+                </button>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+  <button
+    type="button"
+    onClick={shareWhatsApp}
+    className="flex items-center justify-center gap-2 rounded-full bg-[#25D366] py-4 font-body font-medium text-white transition duration-300 hover:-translate-y-1 hover:bg-[#1EBC5A]"
+  >
+    <FaWhatsapp size={19} />
+    Share on WhatsApp
+  </button>
+
+  <button
+    type="button"
+    onClick={copyLink}
+    className="flex items-center justify-center gap-2 rounded-full border border-primary py-4 font-body font-medium text-primary transition duration-300 hover:-translate-y-1 hover:bg-primary hover:text-white"
+  >
+    <FaLink size={16} />
+    Copy Product Link
+  </button>
+</div>
 
                 <div className="mt-9 space-y-4 border-t border-primary/10 pt-7 font-body text-sm text-[#6F6258]">
                   <p>✓ Secure checkout</p>
                   <p>✓ Carefully packed handmade product</p>
                   <p>✓ Delivery available across India</p>
                 </div>
+
+                <section className="mt-14">
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("description")}
+                      className={`rounded-full px-6 py-3 transition ${
+                        activeTab === "description"
+                          ? "bg-primary text-white"
+                          : "bg-background text-primary"
+                      }`}
+                    >
+                      Description
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("specifications")}
+                      className={`rounded-full px-6 py-3 transition ${
+                        activeTab === "specifications"
+                          ? "bg-primary text-white"
+                          : "bg-background text-primary"
+                      }`}
+                    >
+                      Specifications
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("shipping")}
+                      className={`rounded-full px-6 py-3 transition ${
+                        activeTab === "shipping"
+                          ? "bg-primary text-white"
+                          : "bg-background text-primary"
+                      }`}
+                    >
+                      Shipping
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("care")}
+                      className={`rounded-full px-6 py-3 transition ${
+                        activeTab === "care"
+                          ? "bg-primary text-white"
+                          : "bg-background text-primary"
+                      }`}
+                    >
+                      Care
+                    </button>
+                  </div>
+
+                  <div className="mt-8 rounded-[30px] bg-background p-8 font-body leading-8 text-[#6F6258]">
+                    {activeTab === "description" && (
+                      <p>
+                        Every Tashekari product is handcrafted using premium
+                        cotton cords, making every piece unique. Slight
+                        variations are a natural part of handmade craftsmanship.
+                      </p>
+                    )}
+
+                    {activeTab === "specifications" && (
+                      <ul className="space-y-2">
+                        <li>• 100% Handmade</li>
+                        <li>• Premium Cotton Cord</li>
+                        <li>• Sustainable Materials</li>
+                        <li>• Lightweight Design</li>
+                      </ul>
+                    )}
+
+                    {activeTab === "shipping" && (
+                      <ul className="space-y-2">
+                        <li>• Dispatch within 24–48 Hours</li>
+                        <li>• Pan India Delivery</li>
+                        <li>• Secure Packaging</li>
+                      </ul>
+                    )}
+
+                    {activeTab === "care" && (
+                      <ul className="space-y-2">
+                        <li>• Keep away from water</li>
+                        <li>• Store in a dry place</li>
+                        <li>• Clean with a soft dry cloth</li>
+                      </ul>
+                    )}
+                  </div>
+                </section>
               </motion.div>
             </div>
           </div>
         </section>
+
+<section className="bg-white py-20">
+  <div className="mx-auto max-w-6xl px-6 lg:px-10">
+
+    <p className="text-center font-body text-xs uppercase tracking-[0.35em] text-secondary">
+      CUSTOMER REVIEWS
+    </p>
+
+    <h2 className="mt-4 text-center font-heading text-5xl font-semibold text-primary">
+      Loved by Customers
+    </h2>
+
+    <div className="mt-14 grid gap-8 md:grid-cols-3">
+
+      <div className="rounded-[30px] bg-background p-8 shadow-lg">
+        <div className="text-2xl text-yellow-500">
+          ★★★★★
+        </div>
+
+        <p className="mt-5 text-[#6F6258] leading-8">
+          Amazing craftsmanship. The quality exceeded my expectations.
+        </p>
+
+        <h4 className="mt-6 font-semibold text-primary">
+          Priya Sharma
+        </h4>
+      </div>
+
+      <div className="rounded-[30px] bg-background p-8 shadow-lg">
+        <div className="text-2xl text-yellow-500">
+          ★★★★★
+        </div>
+
+        <p className="mt-5 text-[#6F6258] leading-8">
+          Beautiful handmade product. Packaging was also premium.
+        </p>
+
+        <h4 className="mt-6 font-semibold text-primary">
+          Aditi Mehra
+        </h4>
+      </div>
+
+      <div className="rounded-[30px] bg-background p-8 shadow-lg">
+        <div className="text-2xl text-yellow-500">
+          ★★★★★
+        </div>
+
+        <p className="mt-5 text-[#6F6258] leading-8">
+          Definitely buying again. Perfect gifting option.
+        </p>
+
+        <h4 className="mt-6 font-semibold text-primary">
+          Neha Kapoor
+        </h4>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+{recentProducts.length > 0 && (
+  <section className="bg-background py-20">
+    <div className="mx-auto max-w-7xl px-6 lg:px-10">
+      <div className="text-center">
+        <p className="font-body text-xs uppercase tracking-[0.35em] text-secondary">
+          Continue Shopping
+        </p>
+
+        <h2 className="mt-5 font-heading text-5xl font-semibold text-primary">
+          Recently Viewed
+        </h2>
+      </div>
+
+      <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {recentProducts.map((item) => (
+          <ProductCard
+            key={item.id}
+            id={item.id}
+            image={item.image}
+            name={item.name}
+            price={item.price}
+            category={item.category}
+            bestseller={item.bestseller}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+)}
 
         {relatedProducts.length > 0 && (
           <section className="bg-white py-24">

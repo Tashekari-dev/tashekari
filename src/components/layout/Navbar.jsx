@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
 
+import { products } from "../../data/products";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 
@@ -14,11 +15,25 @@ export default function Navbar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const searchRef = useRef(null);
 
   const cartCount = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
   );
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+
+    const query = searchTerm.toLowerCase().trim();
+
+    return products.filter((product) =>
+      product.name.toLowerCase().includes(query)
+    );
+  }, [searchTerm]);
 
   useEffect(() => {
     function handleScroll() {
@@ -28,8 +43,38 @@ export default function Navbar() {
     handleScroll();
     window.addEventListener("scroll", handleScroll);
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setSearchOpen(false);
+        setSearchTerm("");
+      }
+    }
+
+    function handleOutsideClick(event) {
+      if (
+        searchOpen &&
+        searchRef.current &&
+        !searchRef.current.contains(event.target)
+      ) {
+        setSearchOpen(false);
+        setSearchTerm("");
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [searchOpen]);
 
   const desktopLinkClass = ({ isActive }) =>
     `relative transition duration-300 after:absolute after:-bottom-2 after:left-0 after:h-px after:bg-secondary after:transition-all ${
@@ -37,6 +82,11 @@ export default function Navbar() {
         ? "text-secondary after:w-full"
         : "text-primary hover:text-secondary after:w-0 hover:after:w-full"
     }`;
+
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearchTerm("");
+  }
 
   return (
     <header
@@ -48,22 +98,22 @@ export default function Navbar() {
     >
       <AnnouncementBar />
 
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 md:py-5 lg:px-10">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 md:py-5 lg:px-10">
         <Link
-  to="/"
-  onClick={() => setMenuOpen(false)}
-  className="flex items-center gap-2 sm:gap-3"
->
-  <img
-    src={logo}
-    alt="Tashekari"
-    className="h-10 w-10 object-contain sm:h-14 sm:w-14"
-  />
+          to="/"
+          onClick={() => setMenuOpen(false)}
+          className="flex shrink-0 items-center gap-2 sm:gap-3"
+        >
+          <img
+            src={logo}
+            alt="Tashekari"
+            className="h-10 w-10 object-contain sm:h-14 sm:w-14"
+          />
 
-  <span className="font-heading text-xl font-semibold text-primary sm:text-3xl">
-    Tashekari
-  </span>
-</Link>
+          <span className="font-heading text-lg font-semibold text-primary sm:text-3xl">
+            Tashekari
+          </span>
+        </Link>
 
         <ul className="hidden items-center gap-9 font-body text-xs uppercase tracking-[0.24em] md:flex lg:gap-11">
           <li>
@@ -92,8 +142,9 @@ export default function Navbar() {
         </ul>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            to="/shop"
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
             aria-label="Search products"
             className="hidden h-11 w-11 items-center justify-center rounded-full border border-primary/10 text-primary transition duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-white md:flex"
           >
@@ -118,7 +169,7 @@ export default function Navbar() {
                 strokeLinecap="round"
               />
             </svg>
-          </Link>
+          </button>
 
           <Link
             to="/wishlist"
@@ -136,7 +187,7 @@ export default function Navbar() {
 
           <Link
             to="/cart"
-           className="relative rounded-full bg-primary px-4 py-3 font-body text-sm font-medium text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#4E3829] sm:px-6"
+            className="relative rounded-full bg-primary px-4 py-3 font-body text-sm font-medium text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#4E3829] sm:px-6"
           >
             Cart
 
@@ -180,7 +231,7 @@ export default function Navbar() {
       <div
         className={`overflow-hidden border-t border-primary/10 bg-background transition-all duration-300 md:hidden ${
           menuOpen
-            ? "max-h-[500px] opacity-100"
+            ? "max-h-[550px] opacity-100"
             : "max-h-0 border-transparent opacity-0"
         }`}
       >
@@ -225,15 +276,124 @@ export default function Navbar() {
             Contact
           </NavLink>
 
-          <Link
-            to="/shop"
-            onClick={() => setMenuOpen(false)}
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              setSearchOpen(true);
+            }}
             className="mt-5 rounded-full border border-primary px-6 py-3 text-center text-xs tracking-[0.2em] transition hover:bg-primary hover:text-white"
           >
             Search Products
-          </Link>
+          </button>
         </div>
       </div>
+
+      {searchOpen && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 px-4 pt-24 backdrop-blur-sm">
+          <div
+            ref={searchRef}
+            className="w-full max-w-2xl overflow-hidden rounded-[30px] bg-white shadow-2xl"
+          >
+            <div className="flex items-center gap-4 border-b border-primary/10 p-5">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-5 w-5 shrink-0 text-primary"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+
+                <path
+                  d="m16.3 16.3 4.2 4.2"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search handmade products..."
+                autoFocus
+                className="min-w-0 flex-1 bg-transparent font-body text-base text-primary outline-none placeholder:text-[#9B8E84]"
+              />
+
+              <button
+                type="button"
+                onClick={closeSearch}
+                aria-label="Close search"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/10 text-xl text-primary transition hover:bg-primary hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="max-h-[420px] overflow-y-auto p-4">
+              {!searchTerm.trim() ? (
+                <div className="px-4 py-12 text-center">
+                  <p className="font-heading text-3xl text-primary">
+                    Search Tashekari
+                  </p>
+
+                  <p className="mt-3 font-body text-sm text-[#75695F]">
+                    Search bags, keychains, accessories and bookmarks.
+                  </p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredProducts.map((product) => (
+                    <Link
+                      key={product.id}
+                      to={`/product/${product.id}`}
+                      onClick={closeSearch}
+                      className="flex items-center gap-4 rounded-2xl p-3 transition hover:bg-background"
+                    >
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-20 w-20 rounded-2xl object-cover"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <p className="font-body text-xs uppercase tracking-[0.25em] text-secondary">
+                          {product.category}
+                        </p>
+
+                        <h3 className="mt-1 truncate font-heading text-2xl text-primary">
+                          {product.name}
+                        </h3>
+
+                        <p className="mt-1 font-body font-semibold text-primary">
+                          {product.price}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-4 py-12 text-center">
+                  <p className="font-heading text-3xl text-primary">
+                    No Products Found
+                  </p>
+
+                  <p className="mt-3 font-body text-sm text-[#75695F]">
+                    Try searching with another product name.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
