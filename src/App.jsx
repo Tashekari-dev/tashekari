@@ -1,20 +1,21 @@
-import Wishlist from "./pages/Wishlist";
-import WhatsAppButton from "./components/common/WhatsAppButton";
-import ScrollProgress from "./components/common/ScrollProgress";
-import CursorGlow from "./components/common/CursorGlow";
 import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import Product from "./pages/Product";
+import Wishlist from "./pages/Wishlist";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import CustomOrder from "./pages/CustomOrder";
 import NotFound from "./pages/NotFound";
 
+import WhatsAppButton from "./components/common/WhatsAppButton";
+import ScrollProgress from "./components/common/ScrollProgress";
+import CursorGlow from "./components/common/CursorGlow";
 import ScrollToTop from "./components/common/ScrollToTop";
 import PageLoader from "./components/common/PageLoader";
 
@@ -35,21 +36,35 @@ function App() {
 
   return (
     <>
-    <CursorGlow />
-    <ScrollProgress />
-    <WhatsAppButton />
+      <CursorGlow />
+      <ScrollProgress />
+      <WhatsAppButton />
       <ScrollToTop />
 
       <Routes>
         <Route path="/" element={<Home />} />
+
         <Route path="/shop" element={<Shop />} />
+
         <Route path="/product/:id" element={<Product />} />
+
         <Route path="/wishlist" element={<Wishlist />} />
+
         <Route path="/cart" element={<Cart />} />
+
         <Route path="/checkout" element={<Checkout />} />
+
         <Route path="/order-success" element={<OrderSuccess />} />
+
         <Route path="/about" element={<About />} />
+
         <Route path="/contact" element={<Contact />} />
+
+        <Route
+          path="/custom-order"
+          element={<CustomOrder />}
+        />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

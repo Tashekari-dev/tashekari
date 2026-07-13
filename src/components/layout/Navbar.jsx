@@ -127,7 +127,11 @@ export default function Navbar() {
               Shop
             </NavLink>
           </li>
-
+<li>
+  <NavLink to="/custom-order" className={desktopLinkClass}>
+    Custom Orders
+  </NavLink>
+</li>
           <li>
             <NavLink to="/about" className={desktopLinkClass}>
               About
@@ -251,7 +255,13 @@ export default function Navbar() {
           >
             Shop
           </NavLink>
-
+<NavLink
+  to="/custom-order"
+  onClick={() => setMenuOpen(false)}
+  className="border-b border-primary/10 py-4"
+>
+  Custom Orders
+</NavLink>
           <NavLink
             to="/wishlist"
             onClick={() => setMenuOpen(false)}
