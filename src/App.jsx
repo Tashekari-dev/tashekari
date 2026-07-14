@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
@@ -11,6 +11,12 @@ import OrderSuccess from "./pages/OrderSuccess";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import CustomOrder from "./pages/CustomOrder";
+
+import ShippingPolicy from "./pages/ShippingPolicy";
+import ReturnPolicy from "./pages/ReturnPolicy";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsConditions from "./pages/TermsConditions";
+
 import NotFound from "./pages/NotFound";
 
 import WhatsAppButton from "./components/common/WhatsAppButton";
@@ -60,9 +66,26 @@ function App() {
 
         <Route path="/contact" element={<Contact />} />
 
+        <Route path="/custom-order" element={<CustomOrder />} />
+
         <Route
-          path="/custom-order"
-          element={<CustomOrder />}
+          path="/shipping-policy"
+          element={<ShippingPolicy />}
+        />
+
+        <Route
+          path="/return-policy"
+          element={<ReturnPolicy />}
+        />
+
+        <Route
+          path="/privacy-policy"
+          element={<PrivacyPolicy />}
+        />
+
+        <Route
+          path="/terms-and-conditions"
+          element={<TermsConditions />}
         />
 
         <Route path="*" element={<NotFound />} />

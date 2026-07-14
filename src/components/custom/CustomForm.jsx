@@ -1,4 +1,5 @@
 import { useState } from "react";
+import emailjs from "@emailjs/browser";
 import { motion } from "framer-motion";
 
 const productTypes = [
@@ -33,7 +34,8 @@ export default function CustomForm() {
 
   const [fileName, setFileName] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-
+const [loading, setLoading] = useState(false);
+const [errorMessage, setErrorMessage] = useState("");
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -49,11 +51,45 @@ export default function CustomForm() {
     setFileName(file ? file.name : "");
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  async function handleSubmit(event) {
+  event.preventDefault();
+
+  setLoading(true);
+  setSuccessMessage("");
+  setErrorMessage("");
+
+  const emailData = {
+    from_name: formData.name,
+    from_email: formData.email,
+    subject: `Custom Order Request - ${formData.productType}`,
+    message: `
+Phone: ${formData.phone}
+
+Product Type: ${formData.productType}
+
+Preferred Colour: ${formData.colour || "Not specified"}
+
+Budget: ${formData.budget}
+
+Occasion: ${formData.occasion || "Not specified"}
+
+Inspiration Image: ${fileName || "Not uploaded"}
+
+Requirements:
+${formData.requirements}
+    `,
+  };
+
+  try {
+  await emailjs.send(
+  import.meta.env.VITE_EMAILJS_SERVICE_ID,
+  import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+  emailData,
+  import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+);
 
     setSuccessMessage(
-      "Thank you! Your custom order request has been received. Our team will contact you shortly."
+      "Thank you! Your custom order request has been sent successfully. Our team will contact you shortly."
     );
 
     setFormData({
@@ -69,7 +105,16 @@ export default function CustomForm() {
 
     setFileName("");
     event.target.reset();
+  } catch (error) {
+    console.error("Custom order email error:", error);
+
+    setErrorMessage(
+      "We could not send your request. Please try again or contact us on WhatsApp."
+    );
+  } finally {
+    setLoading(false);
   }
+}
 
   const fieldClass =
     "w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary";
@@ -102,13 +147,15 @@ export default function CustomForm() {
         </motion.div>
 
         <motion.form
-          onSubmit={handleSubmit}
+
+  onSubmit={handleSubmit}
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
           viewport={{ once: true }}
           className="mx-auto mt-14 max-w-5xl rounded-[40px] bg-white p-7 shadow-xl sm:p-10"
         >
+          
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <label className="mb-2 block font-body text-sm font-medium text-primary">
@@ -253,12 +300,13 @@ export default function CustomForm() {
                   </span>
                 )}
 
-                <input
-                  type="file"
-                  accept=".png,.jpg,.jpeg"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
+               <input
+  type="file"
+  name="inspiration_image"
+  accept=".png,.jpg,.jpeg"
+  onChange={handleFileChange}
+  className="hidden"
+/>
               </label>
             </div>
 
@@ -284,13 +332,18 @@ export default function CustomForm() {
               {successMessage}
             </div>
           )}
-
+{errorMessage && (
+  <div className="mt-6 rounded-2xl bg-red-50 px-5 py-4 font-body text-sm text-red-600">
+    {errorMessage}
+  </div>
+)}
           <button
-            type="submit"
-            className="mt-8 w-full rounded-full bg-primary py-5 font-body font-medium text-white shadow-lg transition duration-300 hover:-translate-y-1 hover:bg-[#4E3829]"
-          >
-            Submit Custom Order Request
-          </button>
+  type="submit"
+  disabled={loading}
+  className="mt-8 w-full rounded-full bg-primary py-5 font-body font-medium text-white shadow-lg transition duration-300 hover:-translate-y-1 hover:bg-[#4E3829] disabled:cursor-not-allowed disabled:opacity-60"
+>
+  {loading ? "Sending Request..." : "Submit Custom Order Request"}
+</button>
 
           <p className="mt-4 text-center font-body text-xs leading-6 text-[#8A7B70]">
             Submitting this form does not confirm the order. Our team will

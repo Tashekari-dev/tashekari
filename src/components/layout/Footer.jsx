@@ -1,5 +1,6 @@
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { Link } from "react-router-dom";
+
 import logo from "../../assets/logo/logo.png";
 
 export default function Footer() {
@@ -21,20 +22,17 @@ export default function Footer() {
       <div className="relative mx-auto max-w-7xl px-6 py-20 lg:px-10">
         <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1fr]">
           <div>
-           <Link
-  to="/"
-  className="inline-flex items-center gap-4"
->
-  <img
-    src={logo}
-    alt="Tashekari logo"
-    className="h-16 w-16 object-contain"
-  />
+            <Link to="/" className="inline-flex items-center gap-4">
+              <img
+                src={logo}
+                alt="Tashekari logo"
+                className="h-16 w-16 object-contain"
+              />
 
-  <span className="font-heading text-4xl font-semibold tracking-wide md:text-5xl">
-    Tashekari
-  </span>
-</Link>
+              <span className="font-heading text-4xl font-semibold tracking-wide md:text-5xl">
+                Tashekari
+              </span>
+            </Link>
 
             <p className="mt-6 max-w-md font-body leading-8 text-white/65">
               Thoughtfully handcrafted macrame pieces made with love,
@@ -87,6 +85,15 @@ export default function Footer() {
               </li>
 
               <li>
+                <Link
+                  to="/custom-order"
+                  className="transition hover:text-white"
+                >
+                  Custom Orders
+                </Link>
+              </li>
+
+              <li>
                 <Link to="/about" className="transition hover:text-white">
                   About
                 </Link>
@@ -108,43 +115,43 @@ export default function Footer() {
 
           <div>
             <h3 className="font-heading text-2xl font-semibold">
-              Collections
+              Customer Care
             </h3>
 
             <ul className="mt-6 space-y-4 font-body text-sm text-white/60">
               <li>
                 <Link
-                  to="/shop?category=Bags"
+                  to="/shipping-policy"
                   className="transition hover:text-white"
                 >
-                  Macrame Bags
+                  Shipping Policy
                 </Link>
               </li>
 
               <li>
                 <Link
-                  to="/shop?category=Keychains"
+                  to="/return-policy"
                   className="transition hover:text-white"
                 >
-                  Keychains
+                  Return & Exchange
                 </Link>
               </li>
 
               <li>
                 <Link
-                  to="/shop?category=Accessories"
+                  to="/privacy-policy"
                   className="transition hover:text-white"
                 >
-                  Accessories
+                  Privacy Policy
                 </Link>
               </li>
 
               <li>
                 <Link
-                  to="/shop?category=Bookmarks"
+                  to="/terms-and-conditions"
                   className="transition hover:text-white"
                 >
-                  Bookmarks
+                  Terms & Conditions
                 </Link>
               </li>
             </ul>
@@ -194,17 +201,33 @@ export default function Footer() {
               </p>
 
               <div className="mt-3 flex flex-wrap gap-5 font-body text-xs text-white/45">
-                <button type="button" className="transition hover:text-white">
+                <Link
+                  to="/privacy-policy"
+                  className="transition hover:text-white"
+                >
                   Privacy Policy
-                </button>
+                </Link>
 
-                <button type="button" className="transition hover:text-white">
+                <Link
+                  to="/terms-and-conditions"
+                  className="transition hover:text-white"
+                >
                   Terms & Conditions
-                </button>
+                </Link>
 
-                <button type="button" className="transition hover:text-white">
+                <Link
+                  to="/shipping-policy"
+                  className="transition hover:text-white"
+                >
                   Shipping Policy
-                </button>
+                </Link>
+
+                <Link
+                  to="/return-policy"
+                  className="transition hover:text-white"
+                >
+                  Return Policy
+                </Link>
               </div>
             </div>
 
