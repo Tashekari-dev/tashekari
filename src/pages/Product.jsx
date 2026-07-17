@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { FaWhatsapp, FaLink } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-import { products } from "../data/products";
+import { getProductById } from "../services/productService.js";
 import { useCart } from "../context/CartContext";
 
 import Navbar from "../components/layout/Navbar";
@@ -19,7 +19,9 @@ export default function Product() {
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
 
-  const product = products.find((item) => item.id === Number(id));
+  const [product, setProduct] = useState(null);
+const [products, setProducts] = useState([]);
+const [loading, setLoading] = useState(true);
 
 const relatedProducts = useMemo(() => {
   if (!product) return [];
@@ -31,7 +33,7 @@ const relatedProducts = useMemo(() => {
         item.id !== product.id
     )
     .slice(0, 3);
-}, [product]);
+}, [product, products]);
 
 const recentProducts = useMemo(() => {
   if (!product) return [];
@@ -50,6 +52,27 @@ const recentProducts = useMemo(() => {
     return [];
   }
 }, [product]);
+useEffect(() => {
+ async function fetchProduct() {
+  try {
+    const selectedProduct = await getProductById(id);
+
+    setProduct(selectedProduct || null);
+  } catch (error) {
+    console.error("Product fetch error:", error);
+
+    const localProduct = products.find(
+      (item) => String(item.id) === String(id)
+    );
+
+    setProduct(localProduct || null);
+  } finally {
+    setLoading(false);
+  }
+}
+
+  fetchProduct();
+}, [id, products]);
 
 useEffect(() => {
   if (!product) return;
@@ -123,7 +146,19 @@ async function copyLink() {
     alert("Unable to copy the link. Please copy it from the address bar.");
   }
 }
-
+if (loading) {
+  return (
+    <>
+      <Navbar />
+      <main className="flex min-h-screen items-center justify-center">
+        <h2 className="text-2xl font-semibold text-primary">
+          Loading...
+        </h2>
+      </main>
+      <Footer />
+    </>
+  );
+}
   if (!product) {
     return (
       <>

@@ -1,13 +1,34 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
-import { products } from "../../data/products";
+import { getFeaturedProducts } from "../../services/productService.js";
+import { products as localProducts } from "../../data/products";
 import ProductCard from "../common/ProductCard";
 
 export default function FeaturedProducts() {
   const sliderRef = useRef(null);
+
+  const [products, setProducts] = useState(localProducts);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+   
+    async function fetchProducts() {
+  try {
+    const featuredProducts = await getFeaturedProducts();
+
+    setProducts(featuredProducts);
+  } catch (error) {
+    console.error("Featured products error:", error);
+  } finally {
+    setLoading(false);
+  }
+}
+
+    fetchProducts();
+  }, []);
 
   const featuredProducts = products.filter(
     (product) => product.featured
@@ -77,33 +98,41 @@ export default function FeaturedProducts() {
           </div>
         </motion.div>
 
-        <div
-          ref={sliderRef}
-          className="mt-14 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {featuredProducts.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 45 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.6,
-                delay: index * 0.08,
-              }}
-              viewport={{ once: true }}
-              className="min-w-[86%] snap-start sm:min-w-[47%] lg:min-w-[31.5%]"
-            >
-              <ProductCard
-                id={product.id}
-                image={product.image}
-                name={product.name}
-                price={product.price}
-                category={product.category}
-                bestseller={product.bestseller}
-              />
-            </motion.div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="mt-14 flex min-h-80 items-center justify-center">
+            <p className="font-body text-sm text-[#75695F]">
+              Loading products...
+            </p>
+          </div>
+        ) : (
+          <div
+            ref={sliderRef}
+            className="mt-14 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {featuredProducts.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 45 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  delay: index * 0.08,
+                }}
+                viewport={{ once: true }}
+                className="min-w-[86%] snap-start sm:min-w-[47%] lg:min-w-[31.5%]"
+              >
+                <ProductCard
+                  id={product.id}
+                  image={product.image}
+                  name={product.name}
+                  price={product.price}
+                  category={product.category}
+                  bestseller={product.bestseller}
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         <Link
           to="/shop"

@@ -1,29 +1,19 @@
-import bag12 from "../assets/products/bag12.jpeg";
-import bag13 from "../assets/products/bag13.jpeg";
-import bag14 from "../assets/products/bag14.jpeg";
-import keychain1 from "../assets/products/keychain1.jpeg";
-import keychain2 from "../assets/products/keychain2.jpeg";
-import keychain5 from "../assets/products/keychain5.jpeg";
-import pic from "../assets/products/pic.jpeg";
-import pic2 from "../assets/products/pic2.jpeg";
-import pic3 from "../assets/products/pic3.jpeg";
-
 export const products = [
   {
     id: 1,
     name: "Navy Macrame Bag",
-    price: "₹1,499",
+    price: "₹799",
     category: "Bags",
-    image: bag12,
+    image: "/products/bag12.jpeg",
     featured: true,
     bestseller: true,
   },
   {
     id: 2,
     name: "Blue Handmade Sling Bag",
-    price: "₹1,299",
+    price: "₹399",
     category: "Bags",
-    image: bag13,
+    image: "/products/bag13.jpeg",
     featured: true,
     bestseller: true,
   },
@@ -32,7 +22,7 @@ export const products = [
     name: "Macrame Craft Bag",
     price: "₹999",
     category: "Bags",
-    image: bag14,
+    image: "/products/bag14.jpeg",
     featured: true,
     bestseller: false,
   },
@@ -41,7 +31,7 @@ export const products = [
     name: "Macrame Keychain Set",
     price: "₹249",
     category: "Keychains",
-    image: keychain1,
+    image: "/products/keychain1.jpeg",
     featured: true,
     bestseller: true,
   },
@@ -50,7 +40,7 @@ export const products = [
     name: "Handmade Keychain Collection",
     price: "₹299",
     category: "Keychains",
-    image: keychain2,
+    image: "/products/keychain2.jpeg",
     featured: false,
     bestseller: true,
   },
@@ -59,7 +49,7 @@ export const products = [
     name: "Purple Macrame Bookmark",
     price: "₹199",
     category: "Bookmarks",
-    image: keychain5,
+    image: "/products/keychain5.jpeg",
     featured: false,
     bestseller: false,
   },
@@ -68,7 +58,7 @@ export const products = [
     name: "Boho Macrame Earrings",
     price: "₹349",
     category: "Accessories",
-    image: pic,
+    image: "/products/pic.jpeg",
     featured: true,
     bestseller: false,
   },
@@ -77,7 +67,7 @@ export const products = [
     name: "Green Macrame Earrings",
     price: "₹399",
     category: "Accessories",
-    image: pic2,
+    image: "/products/pic2.jpeg",
     featured: false,
     bestseller: true,
   },
@@ -86,7 +76,7 @@ export const products = [
     name: "Rust Macrame Earrings",
     price: "₹399",
     category: "Accessories",
-    image: pic3,
+    image: "/products/pic3.jpeg",
     featured: false,
     bestseller: false,
   },

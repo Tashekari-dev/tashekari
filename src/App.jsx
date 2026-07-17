@@ -17,6 +17,10 @@ import ReturnPolicy from "./pages/ReturnPolicy";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
 
+import Dashboard from "./pages/admin/Dashboard";
+import Login from "./pages/admin/Login";
+import ProtectedRoute from "./components/admin/ProtectedRoute";
+
 import NotFound from "./pages/NotFound";
 
 import WhatsAppButton from "./components/common/WhatsAppButton";
@@ -87,6 +91,21 @@ function App() {
           path="/terms-and-conditions"
           element={<TermsConditions />}
         />
+        
+
+        {/* Admin Dashboard */}
+        <Route
+  path="/admin/login"
+  element={<Login />}
+/>
+        <Route
+  path="/admin"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
 
         <Route path="*" element={<NotFound />} />
       </Routes>

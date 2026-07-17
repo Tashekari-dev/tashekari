@@ -1,18 +1,46 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/common/ProductCard";
 
-import { products } from "../data/products";
+import { getProducts } from "../services/productService.js";
+
 
 export default function Shop() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
 
-  const categories = ["All", "Bags", "Keychains", "Accessories", "Bookmarks"];
+  const categories = [
+    "All",
+    "Bags",
+    "Keychains",
+    "Accessories",
+    "Bookmarks",
+  ];
+
+ useEffect(() => {
+  async function fetchProducts() {
+    try {
+      setLoading(true);
+
+      const data = await getProducts();
+
+      setProducts(data);
+    } catch (error) {
+      console.error("Shop products error:", error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchProducts();
+}, []);
 
   const filteredProducts = useMemo(() => {
     const result = products.filter((product) => {
@@ -43,11 +71,16 @@ export default function Shop() {
     }
 
     if (sortBy === "name") {
-      return [...result].sort((a, b) => a.name.localeCompare(b.name));
+      return [...result].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
     }
 
-    return result;
-  }, [search, category, sortBy]);
+    return [...result].sort((a, b) => {
+      if (a.featured === b.featured) return 0;
+      return a.featured ? -1 : 1;
+    });
+  }, [products, search, category, sortBy]);
 
   return (
     <>
@@ -156,7 +189,13 @@ export default function Shop() {
               )}
             </div>
 
-            {filteredProducts.length > 0 ? (
+            {loading ? (
+              <div className="mt-12 rounded-[32px] bg-background px-6 py-20 text-center">
+                <p className="font-body text-[#75695F]">
+                  Loading products...
+                </p>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredProducts.map((product, index) => (
                   <motion.div

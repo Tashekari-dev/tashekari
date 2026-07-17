@@ -1,8 +1,9 @@
+import { supabase } from "../../lib/supabase";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
 
-import { products } from "../../data/products";
+import { getProducts } from "../../services/productService.js";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [products, setProducts] = useState([]);
 
   const searchRef = useRef(null);
 
@@ -24,7 +26,27 @@ export default function Navbar() {
     (total, item) => total + item.quantity,
     0
   );
+useEffect(() => {
+  async function fetchProducts() {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*");
 
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const formattedProducts = data.map((item) => ({
+      ...item,
+      price: `₹${Number(item.price).toLocaleString("en-IN")}`,
+    }));
+
+    setProducts(formattedProducts);
+  }
+
+  fetchProducts();
+}, []);
   const filteredProducts = useMemo(() => {
     if (!searchTerm.trim()) return [];
 
@@ -33,8 +55,20 @@ export default function Navbar() {
     return products.filter((product) =>
       product.name.toLowerCase().includes(query)
     );
-  }, [searchTerm]);
+  }, [searchTerm, products]);
+useEffect(() => {
+  async function fetchProducts() {
+    try {
+      const productData = await getProducts();
 
+      setProducts(productData);
+    } catch (error) {
+      console.error("Navbar search products error:", error);
+    }
+  }
+
+  fetchProducts();
+}, []);
   useEffect(() => {
     function handleScroll() {
       setScrolled(window.scrollY > 20);
