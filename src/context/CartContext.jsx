@@ -1,6 +1,12 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-const CartContext = createContext();
+const CartContext = createContext(null);
 
 function getNumericPrice(price) {
   if (typeof price === "number") return price;
@@ -8,8 +14,30 @@ function getNumericPrice(price) {
   return Number(String(price).replace(/[₹,\s]/g, "")) || 0;
 }
 
+function getSavedCart() {
+  try {
+    const savedCart = localStorage.getItem("tashekari-cart");
+
+    return savedCart ? JSON.parse(savedCart) : [];
+  } catch (error) {
+    console.error("Unable to load cart:", error);
+    return [];
+  }
+}
+
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(getSavedCart);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "tashekari-cart",
+        JSON.stringify(cartItems)
+      );
+    } catch (error) {
+      console.error("Unable to save cart:", error);
+    }
+  }, [cartItems]);
 
   function addToCart(product) {
     setCartItems((prevItems) => {
@@ -76,25 +104,33 @@ export function CartProvider({ children }) {
     setCartItems([]);
   }
 
-  const cartCount = useMemo(
-    () =>
-      cartItems.reduce(
-        (total, item) => total + item.quantity,
-        0
-      ),
-    [cartItems]
-  );
+  const cartCount = useMemo(() => {
+    return cartItems.reduce(
+      (total, item) => total + item.quantity,
+      0
+    );
+  }, [cartItems]);
 
-  const cartSubtotal = useMemo(
-    () =>
-      cartItems.reduce(
-        (total, item) =>
-          total +
-          getNumericPrice(item.price) * item.quantity,
-        0
-      ),
-    [cartItems]
-  );
+  const cartSubtotal = useMemo(() => {
+    return cartItems.reduce(
+      (total, item) =>
+        total +
+        getNumericPrice(item.price) * item.quantity,
+      0
+    );
+  }, [cartItems]);
+
+  const deliveryCharge = useMemo(() => {
+    if (cartSubtotal === 0 || cartSubtotal >= 999) {
+      return 0;
+    }
+
+    return 99;
+  }, [cartSubtotal]);
+
+  const cartTotal = useMemo(() => {
+    return cartSubtotal + deliveryCharge;
+  }, [cartSubtotal, deliveryCharge]);
 
   return (
     <CartContext.Provider
@@ -102,6 +138,8 @@ export function CartProvider({ children }) {
         cartItems,
         cartCount,
         cartSubtotal,
+        deliveryCharge,
+        cartTotal,
         addToCart,
         increaseQuantity,
         decreaseQuantity,
