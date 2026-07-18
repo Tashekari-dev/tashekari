@@ -7,12 +7,13 @@ import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
 
 export default function Cart() {
-  const {
-    cartItems,
-    increaseQuantity,
-    decreaseQuantity,
-    removeFromCart,
-  } = useCart();
+ const {
+  cartItems,
+  increaseQuantity,
+  decreaseQuantity,
+  removeFromCart,
+  clearCart,
+} = useCart();
 
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -190,7 +191,15 @@ export default function Cart() {
 
                                 <button
                                   type="button"
-                                  onClick={() => removeFromCart(item.id)}
+                                  onClick={() => {
+  if (
+    window.confirm(
+      `Remove "${item.name}" from cart?`
+    )
+  ) {
+    removeFromCart(item.id);
+  }
+}}
                                   className="font-body text-sm text-red-500 transition hover:text-red-700"
                                 >
                                   Remove
@@ -203,12 +212,17 @@ export default function Cart() {
                     ))}
                   </div>
 
-                  <Link
-                    to="/shop"
-                    className="mt-8 inline-flex items-center gap-2 font-body text-sm font-medium text-primary transition hover:text-secondary"
-                  >
-                    ← Continue Shopping
-                  </Link>
+                  <button
+  type="button"
+  onClick={() => {
+    if (window.confirm("Clear complete cart?")) {
+      clearCart();
+    }
+  }}
+  className="ml-6 rounded-full border border-red-500 px-5 py-2 text-sm font-medium text-red-500 transition hover:bg-red-500 hover:text-white"
+>
+  Clear Cart
+</button>
                 </div>
 
                 <aside className="h-fit rounded-[36px] bg-white p-7 shadow-xl lg:sticky lg:top-28">
