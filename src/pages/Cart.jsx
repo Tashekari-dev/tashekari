@@ -41,6 +41,18 @@ export default function Cart() {
   const freeShippingRemaining = Math.max(0, 1999 - subtotal);
   const shippingProgress = Math.min((subtotal / 1999) * 100, 100);
 
+  const estimatedDelivery = new Date();
+
+estimatedDelivery.setDate(
+  estimatedDelivery.getDate() + 5
+);
+
+const deliveryDate =
+  estimatedDelivery.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   function applyCoupon() {
     if (coupon.trim().toUpperCase() === "TASHEKARI10") {
       setDiscount(10);
@@ -50,6 +62,7 @@ export default function Cart() {
       setCouponMessage("Invalid coupon code.");
     }
   }
+  
 
   return (
     <>
@@ -305,14 +318,30 @@ export default function Cart() {
                     to="/checkout"
                     className="mt-8 block w-full rounded-full bg-primary py-5 text-center font-body font-medium text-white shadow-lg transition hover:-translate-y-1 hover:bg-[#4E3829]"
                   >
-                    Proceed To Checkout
+                    Proceed to Secure Checkout →
                   </Link>
 
-                  <div className="mt-7 space-y-3 font-body text-xs text-[#817267]">
-                    <p>✓ Secure checkout</p>
-                    <p>✓ Carefully packed handmade products</p>
-                    <p>✓ Free shipping above ₹1,999</p>
-                  </div>
+                 <div className="mt-7 rounded-2xl bg-[#F8F5F1] p-5">
+  <h3 className="font-semibold text-primary">
+    Delivery Information
+  </h3>
+
+  <div className="mt-4 space-y-3 text-sm text-[#75695F]">
+    <p>🚚 Estimated Delivery</p>
+
+    <p className="font-medium text-primary">
+      {deliveryDate}
+    </p>
+
+    <p>🔒 100% Secure Checkout</p>
+
+    <p>🎁 Handmade & Carefully Packed</p>
+
+    <p>🌿 Sustainable Packaging</p>
+
+    <p>💬 Support via WhatsApp</p>
+  </div>
+</div>
                 </aside>
               </div>
             )}
