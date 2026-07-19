@@ -8,7 +8,7 @@ import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 
 import AnnouncementBar from "./AnnouncementBar";
-import logo from "../../assets/logo/logo.png";
+import logo from "../assets/logo/logo.png";
 
 export default function Navbar() {
   const { cartItems } = useCart();
@@ -139,10 +139,14 @@ useEffect(() => {
           className="flex shrink-0 items-center gap-2 sm:gap-3"
         >
           <img
-            src={logo}
-            alt="Tashekari"
-            className="h-10 w-10 object-contain sm:h-14 sm:w-14"
-          />
+  src={logo}
+  alt="Tashekari"
+  className="w-14 h-14 rounded-full object-cover"
+/>
+
+<h1 className="text-3xl font-serif text-[#6B4F3A]">
+  Tashekari
+</h1>
 
           <span className="font-heading text-lg font-semibold text-primary sm:text-3xl">
             Tashekari
