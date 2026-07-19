@@ -7,21 +7,25 @@ import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
 
 export default function Checkout() {
+  const [couponCode, setCouponCode] = useState("");
+const [couponApplied, setCouponApplied] = useState(false);
+const [couponMessage, setCouponMessage] = useState("");
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
 
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [error, setError] = useState("");
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    phone: "",
-    email: "",
-    address: "",
-    city: "",
-    state: "",
-    pincode: "",
-  });
+ const [formData, setFormData] = useState({
+  fullName: "",
+  phone: "",
+  email: "",
+  address: "",
+  city: "",
+  state: "",
+  pincode: "",
+  orderNotes: "",
+});
 
   function getPriceNumber(price) {
     return Number(String(price).replace(/[₹,\s]/g, ""));
@@ -34,8 +38,8 @@ export default function Checkout() {
   );
 
   const shipping = subtotal >= 1999 || subtotal === 0 ? 0 : 99;
-  const finalTotal = subtotal + shipping;
-
+  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
+const finalTotal = subtotal + shipping - discount;
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -44,6 +48,24 @@ export default function Checkout() {
       [name]: value,
     }));
   }
+  function handleApplyCoupon() {
+  const code = couponCode.trim().toUpperCase();
+
+  if (!code) {
+    setCouponApplied(false);
+    setCouponMessage("Please enter a coupon code.");
+    return;
+  }
+
+  if (code === "TASHEKARI10") {
+    setCouponApplied(true);
+    setCouponMessage("Coupon applied! You saved 10%.");
+    return;
+  }
+
+  setCouponApplied(false);
+  setCouponMessage("Invalid coupon code.");
+}
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -220,26 +242,48 @@ export default function Checkout() {
                     />
                   </div>
 
-                  <div>
-                    <label className="mb-2 block font-body text-sm font-medium text-primary">
-                      State
-                    </label>
+                <div>
+  <label className="mb-2 block font-body text-sm font-medium text-primary">
+    State
+  </label>
 
-                    <input
-                      type="text"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleChange}
-                      placeholder="State"
-                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
-                    />
-                  </div>
+  <select
+    name="state"
+    value={formData.state}
+    onChange={handleChange}
+    className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+  >
+    <option value="">Select State</option>
+    <option value="Andhra Pradesh">Andhra Pradesh</option>
+    <option value="Assam">Assam</option>
+    <option value="Bihar">Bihar</option>
+    <option value="Chhattisgarh">Chhattisgarh</option>
+    <option value="Delhi">Delhi</option>
+    <option value="Goa">Goa</option>
+    <option value="Gujarat">Gujarat</option>
+    <option value="Haryana">Haryana</option>
+    <option value="Himachal Pradesh">Himachal Pradesh</option>
+    <option value="Jharkhand">Jharkhand</option>
+    <option value="Karnataka">Karnataka</option>
+    <option value="Kerala">Kerala</option>
+    <option value="Madhya Pradesh">Madhya Pradesh</option>
+    <option value="Maharashtra">Maharashtra</option>
+    <option value="Odisha">Odisha</option>
+    <option value="Punjab">Punjab</option>
+    <option value="Rajasthan">Rajasthan</option>
+    <option value="Tamil Nadu">Tamil Nadu</option>
+    <option value="Telangana">Telangana</option>
+    <option value="Uttar Pradesh">Uttar Pradesh</option>
+    <option value="Uttarakhand">Uttarakhand</option>
+    <option value="West Bengal">West Bengal</option>
+  </select>
+</div>
 
                   <div className="md:col-span-2">
                     <label className="mb-2 block font-body text-sm font-medium text-primary">
                       Pincode
                     </label>
-
+                    
                     <input
                       type="text"
                       name="pincode"
@@ -249,6 +293,20 @@ export default function Checkout() {
                       maxLength="6"
                       className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
                     />
+                    <div className="md:col-span-2">
+  <label className="mb-2 block font-body text-sm font-medium text-primary">
+    Order Notes
+  </label>
+
+  <textarea
+    name="orderNotes"
+    value={formData.orderNotes}
+    onChange={handleChange}
+    rows="4"
+    placeholder="Gift packing, custom message or delivery instructions"
+    className="w-full resize-none rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
+  />
+</div>
                   </div>
                 </div>
               </div>
@@ -337,6 +395,43 @@ export default function Checkout() {
               <h2 className="font-heading text-4xl font-semibold text-primary">
                 Order Summary
               </h2>
+              <div className="rounded-2xl bg-background p-4">
+  <p className="font-body text-sm font-medium text-primary">
+    Coupon Code
+  </p>
+
+  <div className="mt-3 flex gap-3">
+    <input
+      type="text"
+      value={couponCode}
+      onChange={(event) => setCouponCode(event.target.value)}
+      placeholder="Enter coupon"
+      className="min-w-0 flex-1 rounded-full border border-primary/15 bg-white px-4 py-3 font-body text-sm text-primary outline-none focus:border-secondary"
+    />
+
+    <button
+      type="button"
+      onClick={handleApplyCoupon}
+      className="rounded-full bg-primary px-5 py-3 font-body text-sm font-medium text-white transition hover:bg-[#4E3829]"
+    >
+      Apply
+    </button>
+  </div>
+
+  {couponMessage && (
+    <p
+      className={`mt-3 font-body text-xs ${
+        couponApplied ? "text-green-600" : "text-red-500"
+      }`}
+    >
+      {couponMessage}
+    </p>
+  )}
+
+  <p className="mt-2 font-body text-xs text-[#817267]">
+    Try code: TASHEKARI10
+  </p>
+</div>
 
               {cartItems.length === 0 ? (
                 <div className="mt-8 rounded-2xl bg-background p-6 text-center">
@@ -386,21 +481,25 @@ export default function Checkout() {
               )}
 
               <div className="mt-8 space-y-4 border-b border-primary/10 pb-7 font-body">
-                <div className="flex justify-between text-[#75695F]">
-                  <span>Subtotal</span>
-                  <span>₹{subtotal.toLocaleString()}</span>
-                </div>
+  <div className="flex justify-between text-[#75695F]">
+    <span>Subtotal</span>
+    <span>₹{subtotal.toLocaleString()}</span>
+  </div>
 
-                <div className="flex justify-between text-[#75695F]">
-                  <span>Shipping</span>
-                  <span>
-                    {shipping === 0
-                      ? "Free"
-                      : `₹${shipping.toLocaleString()}`}
-                  </span>
-                </div>
-              </div>
+  <div className="flex justify-between text-[#75695F]">
+    <span>Shipping</span>
+    <span>
+      {shipping === 0 ? "Free" : `₹${shipping.toLocaleString()}`}
+    </span>
+  </div>
 
+  {couponApplied && (
+    <div className="flex justify-between text-green-600">
+      <span>Discount</span>
+      <span>-₹{discount.toLocaleString()}</span>
+    </div>
+  )}
+</div>
               <div className="mt-7 flex items-center justify-between">
                 <span className="font-heading text-3xl font-semibold text-primary">
                   Total
