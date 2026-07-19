@@ -133,15 +133,14 @@ useEffect(() => {
       <AnnouncementBar />
 
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 md:py-5 lg:px-10">
-        <Link
-          to="/"
-          onClick={() => setMenuOpen(false)}
-          className="flex shrink-0 items-center gap-2 sm:gap-3"
-        >
-        <Link to="/" className="flex items-center gap-3">
+      <Link
+  to="/"
+  onClick={() => setMenuOpen(false)}
+  className="flex shrink-0 items-center gap-3"
+>
   <img
     src={logo}
-    alt="Tashekari logo"
+    alt="Tashekari"
     className="h-14 w-14 rounded-full object-cover"
   />
 
@@ -149,7 +148,6 @@ useEffect(() => {
     Tashekari
   </span>
 </Link>
-        </Link>
 
         <ul className="hidden items-center gap-9 font-body text-xs uppercase tracking-[0.24em] md:flex lg:gap-11">
           <li>
