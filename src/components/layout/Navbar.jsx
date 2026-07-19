@@ -138,19 +138,17 @@ useEffect(() => {
           onClick={() => setMenuOpen(false)}
           className="flex shrink-0 items-center gap-2 sm:gap-3"
         >
-          <img
-  src={logo}
-  alt="Tashekari"
-  className="w-14 h-14 rounded-full object-cover"
-/>
+        <Link to="/" className="flex items-center gap-3">
+  <img
+    src={logo}
+    alt="Tashekari logo"
+    className="h-14 w-14 rounded-full object-cover"
+  />
 
-<h1 className="text-3xl font-serif text-[#6B4F3A]">
-  Tashekari
-</h1>
-
-          <span className="font-heading text-lg font-semibold text-primary sm:text-3xl">
-            Tashekari
-          </span>
+  <span className="font-heading text-3xl font-semibold text-primary">
+    Tashekari
+  </span>
+</Link>
         </Link>
 
         <ul className="hidden items-center gap-9 font-body text-xs uppercase tracking-[0.24em] md:flex lg:gap-11">
