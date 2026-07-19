@@ -8,7 +8,7 @@ import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 
 import AnnouncementBar from "./AnnouncementBar";
-import logo from "../assets/logo/logo.png";
+import logo from "../../assets/logo/logo.png";
 
 export default function Navbar() {
   const { cartItems } = useCart();
