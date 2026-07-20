@@ -5,7 +5,36 @@ import { motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
+import { supabase } from "../lib/supabase";
 
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const existingScript = document.querySelector(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(true));
+      existingScript.addEventListener("error", () => resolve(false));
+      return;
+    }
+
+    const script = document.createElement("script");
+
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+
+    document.body.appendChild(script);
+  });
+}
 export default function Checkout() {
   const [couponCode, setCouponCode] = useState("");
 const [couponApplied, setCouponApplied] = useState(false);
@@ -15,6 +44,7 @@ const [couponMessage, setCouponMessage] = useState("");
 
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [error, setError] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
  const [formData, setFormData] = useState({
   fullName: "",
@@ -67,52 +97,200 @@ const finalTotal = subtotal + shipping - discount;
   setCouponMessage("Invalid coupon code.");
 }
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
+ async function handleSubmit(event) {
+  event.preventDefault();
+  setError("");
 
-    if (cartItems.length === 0) {
-      setError("Your cart is empty. Please add a product first.");
-      return;
+  if (cartItems.length === 0) {
+    setError("Your cart is empty. Please add a product first.");
+    return;
+  }
+
+  if (
+    !formData.fullName.trim() ||
+    !formData.phone.trim() ||
+    !formData.email.trim() ||
+    !formData.address.trim() ||
+    !formData.city.trim() ||
+    !formData.state.trim() ||
+    !formData.pincode.trim()
+  ) {
+    setError("Please fill all shipping details.");
+    return;
+  }
+
+  if (!/^[6-9]\d{9}$/.test(formData.phone)) {
+    setError("Please enter a valid 10-digit phone number.");
+    return;
+  }
+
+  if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+
+  if (!/^\d{6}$/.test(formData.pincode)) {
+    setError("Please enter a valid 6-digit pincode.");
+    return;
+  }
+
+  // Cash on Delivery
+  if (paymentMethod === "cod") {
+    clearCart();
+    navigate("/order-success");
+    return;
+  }
+
+  // Online Payment
+  try {
+    setIsPlacingOrder(true);
+
+    const scriptLoaded = await loadRazorpayScript();
+
+    if (!scriptLoaded) {
+      throw new Error(
+        "Razorpay checkout could not load. Please check your internet connection."
+      );
     }
 
-    if (
-      !formData.fullName.trim() ||
-      !formData.phone.trim() ||
-      !formData.email.trim() ||
-      !formData.address.trim() ||
-      !formData.city.trim() ||
-      !formData.state.trim() ||
-      !formData.pincode.trim()
-    ) {
-      setError("Please fill all shipping details.");
-      return;
+    const { data, error: functionError } =
+      await supabase.functions.invoke("create-razorpay-order", {
+        body: {
+          amount: finalTotal,
+          receipt: `tashekari_${Date.now()}`,
+        },
+      });
+
+    if (functionError) {
+      throw new Error(
+        functionError.message || "Unable to create payment order."
+      );
     }
 
-    if (!/^[6-9]\d{9}$/.test(formData.phone)) {
-      setError("Please enter a valid 10-digit phone number.");
-      return;
+    if (!data?.id || !data?.keyId) {
+      throw new Error("Invalid order response received.");
     }
 
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setError("Please enter a valid email address.");
-      return;
+    const options = {
+      key: data.keyId,
+      amount: data.amount,
+      currency: data.currency || "INR",
+      name: "Tashekari",
+      description: "Handmade Macrame Order",
+      order_id: data.id,
+
+      prefill: {
+        name: formData.fullName,
+        email: formData.email,
+        contact: formData.phone,
+      },
+
+      notes: {
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+        orderNotes: formData.orderNotes || "",
+      },
+
+      theme: {
+        color: "#6B4F3A",
+      },
+handler: async function (response) {
+  try {
+    const { data: verificationData, error: verificationError } =
+      await supabase.functions.invoke("verify-razorpay-payment", {
+       body: {
+  razorpay_order_id: response.razorpay_order_id,
+  razorpay_payment_id: response.razorpay_payment_id,
+  razorpay_signature: response.razorpay_signature,
+  original_order_id: data.id,
+
+  orderData: {
+    fullName: formData.fullName,
+    phone: formData.phone,
+    email: formData.email,
+    address: formData.address,
+    city: formData.city,
+    state: formData.state,
+    pincode: formData.pincode,
+    items: cartItems,
+    amount: finalTotal,
+  },
+},
+      });
+
+    if (verificationError) {
+      throw new Error(
+        verificationError.message ||
+          "Payment verification request failed."
+      );
     }
 
-    if (!/^\d{6}$/.test(formData.pincode)) {
-      setError("Please enter a valid 6-digit pincode.");
-      return;
-    }
-
-    if (paymentMethod === "online") {
-      alert("Online payment gateway will be connected in the next step.");
-      return;
+    if (!verificationData?.success) {
+      throw new Error(
+        verificationData?.message ||
+          "Payment verification failed."
+      );
     }
 
     clearCart();
-    navigate("/order-success");
-  }
 
+    navigate("/order-success", {
+      state: {
+        paymentMethod: "online",
+        paymentId: verificationData.paymentId,
+        orderId: verificationData.orderId,
+        amount: finalTotal,
+      },
+    });
+  } catch (verificationError) {
+    console.error(
+      "Payment verification error:",
+      verificationError
+    );
+
+    setError(
+      verificationError instanceof Error
+        ? verificationError.message
+        : "Payment verification failed."
+    );
+  } finally {
+    setIsPlacingOrder(false);
+  }
+},
+
+      modal: {
+        ondismiss: function () {
+          setIsPlacingOrder(false);
+        },
+      },
+    };
+
+    const razorpayCheckout = new window.Razorpay(options);
+
+    razorpayCheckout.on("payment.failed", function (response) {
+      const message =
+        response?.error?.description ||
+        "Payment failed. Please try again.";
+
+      setError(message);
+      setIsPlacingOrder(false);
+    });
+
+    razorpayCheckout.open();
+  } catch (paymentError) {
+    console.error("Online payment error:", paymentError);
+
+    setError(
+      paymentError instanceof Error
+        ? paymentError.message
+        : "Unable to start online payment."
+    );
+
+    setIsPlacingOrder(false);
+  }
+}
   return (
     <>
       <Navbar />
@@ -518,12 +696,14 @@ const finalTotal = subtotal + shipping - discount;
 
               <button
                 type="submit"
-                disabled={cartItems.length === 0}
+                disabled={cartItems.length === 0 || isPlacingOrder}
                 className="mt-8 w-full rounded-full bg-primary py-5 font-body font-medium text-white shadow-lg transition hover:-translate-y-1 hover:bg-[#4E3829] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {paymentMethod === "cod"
-                  ? "Place COD Order"
-                  : "Proceed To Payment"}
+               {isPlacingOrder
+  ? "Please Wait..."
+  : paymentMethod === "cod"
+    ? "Place COD Order"
+    : "Proceed To Payment"}
               </button>
 
               <Link
