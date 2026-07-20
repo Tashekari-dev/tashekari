@@ -19,6 +19,9 @@ import TermsConditions from "./pages/TermsConditions";
 
 import Dashboard from "./pages/admin/Dashboard";
 import Login from "./pages/admin/Login";
+import Orders from "./pages/admin/Orders";
+import Products from "./pages/admin/Products";
+import Settings from "./pages/admin/Settings";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
 import NotFound from "./pages/NotFound";
@@ -106,7 +109,32 @@ function App() {
     </ProtectedRoute>
   }
 />
+<Route
+  path="/admin/orders"
+  element={
+    <ProtectedRoute>
+      <Orders />
+    </ProtectedRoute>
+  }
+/>
 
+<Route
+  path="/admin/products"
+  element={
+    <ProtectedRoute>
+      <Products />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/settings"
+  element={
+    <ProtectedRoute>
+      <Settings />
+    </ProtectedRoute>
+  }
+/>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
