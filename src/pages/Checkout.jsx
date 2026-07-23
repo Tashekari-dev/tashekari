@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
 function loadRazorpayScript() {
@@ -40,7 +41,8 @@ export default function Checkout() {
 const [couponApplied, setCouponApplied] = useState(false);
 const [couponMessage, setCouponMessage] = useState("");
   const navigate = useNavigate();
-  const { cartItems, clearCart } = useCart();
+const { cartItems, clearCart } = useCart();
+const { user, authLoading } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [error, setError] = useState("");
@@ -56,6 +58,23 @@ const [couponMessage, setCouponMessage] = useState("");
   pincode: "",
   orderNotes: "",
 });
+useEffect(() => {
+  if (authLoading || !user) {
+    return;
+  }
+
+  const savedFullName =
+    user.user_metadata?.full_name?.trim() ||
+    user.user_metadata?.name?.trim() ||
+    user.email?.split("@")[0] ||
+    "";
+
+  setFormData((current) => ({
+    ...current,
+    fullName: current.fullName || savedFullName,
+    email: user.email || current.email,
+  }));
+}, [authLoading, user]);
 
   function getPriceNumber(price) {
     return Number(String(price).replace(/[₹,\s]/g, ""));
@@ -99,6 +118,7 @@ const finalTotal = subtotal + shipping - discount;
 
  async function handleSubmit(event) {
   event.preventDefault();
+  console.log("Cart Items:", cartItems);
   setError("");
 
   if (cartItems.length === 0) {
@@ -135,11 +155,64 @@ const finalTotal = subtotal + shipping - discount;
   }
 
   // Cash on Delivery
-  if (paymentMethod === "cod") {
+if (paymentMethod === "cod") {
+  try {
+    setIsPlacingOrder(true);
+
+    const { data, error: codError } =
+      await supabase.functions.invoke("place-cod-order", {
+        body: {
+          orderData: {
+            fullName: formData.fullName,
+            phone: formData.phone,
+            email: formData.email,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            pincode: formData.pincode,
+            items: cartItems,
+            amount: finalTotal,
+          },
+        },
+      });
+
+    if (codError) {
+      throw new Error(
+        codError.message || "Unable to place COD order."
+      );
+    }
+
+    if (!data?.success) {
+      throw new Error(
+        data?.message || "Unable to place COD order."
+      );
+    }
+
     clearCart();
-    navigate("/order-success");
+
+    navigate("/order-success", {
+      state: {
+        paymentMethod: "cod",
+        orderId: data.orderId,
+        amount: finalTotal,
+      },
+    });
+
     return;
+  } catch (codOrderError) {
+    console.error("COD order error:", codOrderError);
+
+    setError(
+      codOrderError instanceof Error
+        ? codOrderError.message
+        : "Unable to place COD order."
+    );
+
+    return;
+  } finally {
+    setIsPlacingOrder(false);
   }
+}
 
   // Online Payment
   try {
@@ -368,14 +441,24 @@ handler: async function (response) {
                       Email Address
                     </label>
 
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="you@example.com"
-                      className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
-                    />
+                   <input
+  type="email"
+  name="email"
+  value={formData.email}
+  onChange={handleChange}
+  placeholder="you@example.com"
+  readOnly={Boolean(user)}
+  className={`w-full rounded-2xl border border-primary/15 px-5 py-4 font-body text-primary outline-none transition focus:border-secondary ${
+    user
+      ? "cursor-not-allowed bg-gray-100"
+      : "bg-background"
+  }`}
+/>
+{user && (
+  <p className="mt-2 font-body text-xs text-[#817267]">
+    This order will be linked to your logged-in account.
+  </p>
+)}
                   </div>
                 </div>
               </div>
@@ -405,7 +488,7 @@ handler: async function (response) {
                     />
                   </div>
 
-                  <div>
+                  <div className="mt-8 grid min-w-0 gap-5 md:grid-cols-2">
                     <label className="mb-2 block font-body text-sm font-medium text-primary">
                       City
                     </label>
@@ -420,17 +503,18 @@ handler: async function (response) {
                     />
                   </div>
 
-                <div>
+               <div className="mt-8 grid min-w-0 gap-5 md:grid-cols-2">
   <label className="mb-2 block font-body text-sm font-medium text-primary">
     State
   </label>
 
-  <select
-    name="state"
-    value={formData.state}
-    onChange={handleChange}
-    className="w-full rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-secondary"
-  >
+ <select
+  name="state"
+  value={formData.state}
+  onChange={handleChange}
+  size="1"
+  className="block h-14 w-full min-w-0 max-w-full rounded-2xl border border-primary/15 bg-background px-4 font-body text-sm text-primary outline-none transition focus:border-secondary sm:px-5 sm:text-base"
+>
     <option value="">Select State</option>
     <option value="Andhra Pradesh">Andhra Pradesh</option>
     <option value="Assam">Assam</option>

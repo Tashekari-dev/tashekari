@@ -1,8 +1,10 @@
 import { supabase } from "../lib/supabase";
 
 export async function signIn(email, password) {
+  const cleanEmail = email.trim().toLowerCase();
+
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: cleanEmail,
     password,
   });
 
@@ -13,14 +15,107 @@ export async function signIn(email, password) {
   return data;
 }
 
+export async function signUp(email, password, fullName = "") {
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanFullName = fullName.trim();
+
+  const { data, error } = await supabase.auth.signUp({
+    email: cleanEmail,
+    password,
+    options: {
+      data: {
+        full_name: cleanFullName,
+      },
+      emailRedirectTo: `${window.location.origin}/login`,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function signOut() {
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function getCurrentUser() {
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
 
+  if (error) {
+    throw error;
+  }
+
   return user;
+}
+
+export async function getSession() {
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error) {
+    throw error;
+  }
+
+  return session;
+}
+
+export function onAuthStateChange(callback) {
+  return supabase.auth.onAuthStateChange(callback);
+}
+
+export async function resetPassword(email) {
+  const cleanEmail = email.trim().toLowerCase();
+
+  const { data, error } =
+    await supabase.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updatePassword(newPassword) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateProfile({
+  fullName,
+  phone,
+}) {
+  const { data, error } = await supabase.auth.updateUser({
+    data: {
+      full_name: fullName?.trim() || "",
+      phone: phone?.trim() || "",
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }

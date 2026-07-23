@@ -12,13 +12,20 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import CustomOrder from "./pages/CustomOrder";
 
+import CustomerLogin from "./pages/CustomerLogin";
+import CustomerAccount from "./pages/CustomerAccount";
+import CustomerOrderDetails from "./pages/CustomerOrderDetails";
+import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
 import ShippingPolicy from "./pages/ShippingPolicy";
 import ReturnPolicy from "./pages/ReturnPolicy";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
 
 import Dashboard from "./pages/admin/Dashboard";
-import Login from "./pages/admin/Login";
+import AdminLogin from "./pages/admin/Login";
 import Orders from "./pages/admin/Orders";
 import Products from "./pages/admin/Products";
 import Settings from "./pages/admin/Settings";
@@ -55,26 +62,78 @@ function App() {
       <ScrollToTop />
 
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
 
         <Route path="/shop" element={<Shop />} />
 
-        <Route path="/product/:id" element={<Product />} />
+        <Route
+          path="/product/:id"
+          element={<Product />}
+        />
 
-        <Route path="/wishlist" element={<Wishlist />} />
+        <Route
+          path="/wishlist"
+          element={<Wishlist />}
+        />
 
         <Route path="/cart" element={<Cart />} />
 
-        <Route path="/checkout" element={<Checkout />} />
+        <Route
+          path="/checkout"
+          element={<Checkout />}
+        />
 
-        <Route path="/order-success" element={<OrderSuccess />} />
+        <Route
+          path="/order-success"
+          element={<OrderSuccess />}
+        />
 
         <Route path="/about" element={<About />} />
 
-        <Route path="/contact" element={<Contact />} />
+        <Route
+          path="/contact"
+          element={<Contact />}
+        />
 
-        <Route path="/custom-order" element={<CustomOrder />} />
+        <Route
+          path="/custom-order"
+          element={<CustomOrder />}
+        />
 
+        {/* Customer Authentication Routes */}
+        <Route
+          path="/login"
+          element={<CustomerLogin />}
+        />
+
+        <Route
+          path="/signup"
+          element={<Signup />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password"
+          element={<ResetPassword />}
+        />
+
+        {/* Customer Account Routes */}
+        <Route
+          path="/account"
+          element={<CustomerAccount />}
+        />
+
+        <Route
+          path="/account/orders/:id"
+          element={<CustomerOrderDetails />}
+        />
+
+        {/* Policy Routes */}
         <Route
           path="/shipping-policy"
           element={<ShippingPolicy />}
@@ -94,47 +153,51 @@ function App() {
           path="/terms-and-conditions"
           element={<TermsConditions />}
         />
-        
 
-        {/* Admin Dashboard */}
+        {/* Admin Login */}
         <Route
-  path="/admin/login"
-  element={<Login />}
-/>
+          path="/admin/login"
+          element={<AdminLogin />}
+        />
+
+        {/* Protected Admin Routes */}
         <Route
-  path="/admin"
-  element={
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/admin/orders"
-  element={
-    <ProtectedRoute>
-      <Orders />
-    </ProtectedRoute>
-  }
-/>
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/admin/products"
-  element={
-    <ProtectedRoute>
-      <Products />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/admin/settings"
-  element={
-    <ProtectedRoute>
-      <Settings />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/admin/products"
+          element={
+            <ProtectedRoute>
+              <Products />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

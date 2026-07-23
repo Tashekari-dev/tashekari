@@ -1,4 +1,3 @@
-import { supabase } from "../../lib/supabase";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
@@ -6,6 +5,7 @@ import { FaHeart } from "react-icons/fa";
 import { getProducts } from "../../services/productService.js";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
+import { useAuth } from "../../context/AuthContext";
 
 import AnnouncementBar from "./AnnouncementBar";
 import logo from "../../assets/logo/logo.png";
@@ -14,6 +14,12 @@ export default function Navbar() {
   const { cartItems } = useCart();
   const { wishlistCount } = useWishlist();
 
+  const {
+    user,
+    isAuthenticated,
+    authLoading,
+    logout,
+  } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -26,27 +32,7 @@ export default function Navbar() {
     (total, item) => total + item.quantity,
     0
   );
-useEffect(() => {
-  async function fetchProducts() {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*");
 
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    const formattedProducts = data.map((item) => ({
-      ...item,
-      price: `₹${Number(item.price).toLocaleString("en-IN")}`,
-    }));
-
-    setProducts(formattedProducts);
-  }
-
-  fetchProducts();
-}, []);
   const filteredProducts = useMemo(() => {
     if (!searchTerm.trim()) return [];
 
@@ -121,6 +107,15 @@ useEffect(() => {
     setSearchOpen(false);
     setSearchTerm("");
   }
+  async function handleCustomerLogout() {
+  try {
+    await logout();
+    setMenuOpen(false);
+  } catch (error) {
+    console.error("Customer logout error:", error);
+    alert(error.message || "Unable to logout.");
+  }
+}
 
   return (
     <header
@@ -222,11 +217,40 @@ useEffect(() => {
               </span>
             )}
           </Link>
+         {!authLoading &&
+  (isAuthenticated ? (
+    <>
+      <Link
+        to="/account"
+        title={user?.email || "Customer account"}
+        className="hidden rounded-full border border-primary/15 px-4 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:block"
+      >
+        My Account
+      </Link>
 
+      <button
+        type="button"
+        onClick={handleCustomerLogout}
+        title="Logout"
+        className="hidden rounded-full border border-primary/15 px-4 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:block"
+      >
+        Logout
+      </button>
+    </>
+  ) : (
+    <Link
+      to="/login"
+      className="hidden rounded-full border border-primary/15 px-4 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:block"
+    >
+      Login
+    </Link>
+  ))}
           <Link
+        
             to="/cart"
             className="relative rounded-full bg-primary px-4 py-3 font-body text-sm font-medium text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#4E3829] sm:px-6"
           >
+            
             Cart
 
             {cartCount > 0 && (
@@ -266,13 +290,13 @@ useEffect(() => {
         </div>
       </nav>
 
-      <div
-        className={`overflow-hidden border-t border-primary/10 bg-background transition-all duration-300 md:hidden ${
-          menuOpen
-            ? "max-h-[550px] opacity-100"
-            : "max-h-0 border-transparent opacity-0"
-        }`}
-      >
+     <div
+  className={`overflow-y-auto border-t border-primary/10 bg-background transition-all duration-300 md:hidden ${
+    menuOpen
+      ? "max-h-[calc(100vh-120px)] opacity-100"
+      : "max-h-0 overflow-hidden border-transparent opacity-0"
+  }`}
+>
         <div className="flex flex-col px-6 py-6 font-body text-sm uppercase tracking-[0.2em] text-primary">
           <NavLink
             to="/"
@@ -303,6 +327,42 @@ useEffect(() => {
           >
             Wishlist
           </NavLink>
+          {!authLoading &&
+  (isAuthenticated ? (
+    <>
+      <div className="border-b border-primary/10 py-4 normal-case tracking-normal">
+        <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+          Signed in as
+        </p>
+
+        <p className="mt-2 break-all text-sm text-primary">
+          {user?.email || "Customer"}
+        </p>
+      </div>
+      <NavLink
+  to="/account"
+  onClick={() => setMenuOpen(false)}
+  className="border-b border-primary/10 py-4"
+>
+  My Account
+</NavLink>
+      <button
+        type="button"
+        onClick={handleCustomerLogout}
+        className="border-b border-primary/10 py-4 text-left uppercase tracking-[0.2em]"
+      >
+        Logout
+      </button>
+    </>
+  ) : (
+    <NavLink
+      to="/login"
+      onClick={() => setMenuOpen(false)}
+      className="border-b border-primary/10 py-4"
+    >
+      Login
+    </NavLink>
+  ))}
 
           <NavLink
             to="/about"

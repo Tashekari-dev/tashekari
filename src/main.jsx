@@ -5,17 +5,20 @@ import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App";
 
+import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <CartProvider>
+    <AuthProvider>
       <WishlistProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+        <CartProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </CartProvider>
       </WishlistProvider>
-    </CartProvider>
+    </AuthProvider>
   </StrictMode>
 );
