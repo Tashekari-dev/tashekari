@@ -11,21 +11,12 @@ import WhyChooseUs from "../components/home/WhyChooseUs";
 import About from "../components/home/About";
 import BrandStory from "../components/home/BrandStory";
 import Newsletter from "../components/home/Newsletter";
-
 export default function Home() {
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <Navbar />
-
       <Hero />
-
-      {/* TEMPORARY AUTO DEPLOY TEST */}
-      <div className="bg-yellow-100 border border-yellow-300 text-center py-3">
-        <p className="text-sm font-semibold text-yellow-800">
-          🚀 Deployment Test - 24 July 2026
-        </p>
-      </div>
-
       <BrandStory />
       <VideoBanner />
       <Testimonials />
@@ -34,8 +25,9 @@ export default function Home() {
       <WhyChooseUs />
       <About />
       <Newsletter />
-      <InstagramGallery />
+       <InstagramGallery />
       <Footer />
-    </PageTransition>
+      </PageTransition>
+    </>
   );
 }
