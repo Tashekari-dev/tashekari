@@ -20,12 +20,7 @@ export default function Home() {
 
         <Hero />
 
-        {/* TEMPORARY FINAL AUTO-DEPLOY TEST */}
-        <div className="border-y border-green-300 bg-green-100 px-4 py-3 text-center">
-          <p className="text-sm font-semibold text-green-800">
-            ✅ Auto Deploy Final Test
-          </p>
-        </div>
+       
 
         <BrandStory />
         <VideoBanner />
