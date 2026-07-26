@@ -2,17 +2,34 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   FaBoxOpen,
   FaChartPie,
+  FaClipboardList,
   FaCog,
   FaSignOutAlt,
   FaShoppingBag,
 } from "react-icons/fa";
+import toast from "react-hot-toast";
+
+import { signOut } from "../../services/authService.js";
 
 export default function AdminLayout({ children }) {
   const navigate = useNavigate();
 
-  function handleLogout() {
-    localStorage.removeItem("adminLoggedIn");
-    navigate("/admin/login");
+  async function handleLogout() {
+    try {
+      await signOut();
+
+      localStorage.removeItem("adminLoggedIn");
+
+      toast.dismiss();
+      toast.success("Admin logged out successfully.");
+
+      navigate("/admin/login", { replace: true });
+    } catch (error) {
+      console.error("Admin logout error:", error);
+
+      toast.dismiss();
+      toast.error("Logout failed. Please try again.");
+    }
   }
 
   const menuItems = [
@@ -28,6 +45,11 @@ export default function AdminLayout({ children }) {
       icon: <FaShoppingBag />,
     },
     {
+      label: "Custom Orders",
+      path: "/admin/custom-orders",
+      icon: <FaClipboardList />,
+    },
+    {
       label: "Products",
       path: "/admin/products",
       icon: <FaBoxOpen />,
@@ -41,7 +63,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-[#F8F5F1] lg:flex">
-      <aside className="w-full bg-[#6B4F3A] px-5 py-6 text-white lg:min-h-screen lg:w-[270px] lg:px-6 lg:py-8">
+      <aside className="w-full bg-[#6B4F3A] px-5 py-6 text-white lg:min-h-screen lg:w-[270px] lg:shrink-0 lg:px-6 lg:py-8">
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">
             Tashekari
@@ -52,7 +74,7 @@ export default function AdminLayout({ children }) {
           </h1>
         </div>
 
-        <nav className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-1">
+        <nav className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-1">
           {menuItems.map((item) => (
             <NavLink
               key={item.path}

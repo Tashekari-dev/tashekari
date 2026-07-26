@@ -3,6 +3,7 @@ import AdminLayout from "../../components/admin/AdminLayout";
 import { supabase } from "../../lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import toast from "react-hot-toast";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -45,11 +46,13 @@ const [savingTracking, setSavingTracking] = useState(false);
       )
     );
 
-    alert("Order status updated.");
+    toast.dismiss();
+toast.success("Order status updated.");
 
   } catch (error) {
     console.error(error);
-    alert(error.message);
+   toast.dismiss();
+toast.error(error.message);
   } finally {
     setUpdatingStatus(false);
   }
@@ -58,7 +61,8 @@ async function saveTrackingDetails() {
   if (!selectedOrder) return;
 
   if (!courierName.trim() || !trackingNumber.trim()) {
-    alert("Please enter courier name and tracking number.");
+    toast.dismiss();
+toast.error("Please enter courier name and tracking number.");
     return;
   }
 
@@ -89,10 +93,12 @@ async function saveTrackingDetails() {
       )
     );
 
-    alert("Tracking details saved.");
+    toast.dismiss();
+toast.success("Tracking details saved.");
   } catch (error) {
     console.error("Tracking update error:", error);
-    alert(error.message || "Unable to save tracking details.");
+    toast.dismiss();
+toast.error(error.message || "Unable to save tracking details.");
   } finally {
     setSavingTracking(false);
   }

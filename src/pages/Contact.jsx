@@ -3,6 +3,7 @@ import emailjs from "@emailjs/browser";
 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
+import toast from "react-hot-toast";
 
 export default function Contact() {
   const [loading, setLoading] = useState(false);
@@ -48,10 +49,11 @@ export default function Contact() {
 
         setLoading(false);
       })
-      .catch(() => {
-        setLoading(false);
-        alert("Something went wrong. Please try again.");
-      });
+     .catch(() => {
+  setLoading(false);
+  toast.dismiss();
+  toast.error("Something went wrong. Please try again.");
+});
   }
 
   return (

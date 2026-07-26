@@ -27,6 +27,7 @@ import TermsConditions from "./pages/TermsConditions";
 import Dashboard from "./pages/admin/Dashboard";
 import AdminLogin from "./pages/admin/Login";
 import Orders from "./pages/admin/Orders";
+import CustomOrders from "./pages/admin/CustomOrders";
 import Products from "./pages/admin/Products";
 import Settings from "./pages/admin/Settings";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
@@ -178,6 +179,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/admin/custom-orders"
+  element={
+    <ProtectedRoute>
+      <CustomOrders />
+    </ProtectedRoute>
+  }
+/>
 
         <Route
           path="/admin/products"

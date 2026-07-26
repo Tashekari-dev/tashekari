@@ -1,7 +1,8 @@
 import { useState } from "react";
 import emailjs from "@emailjs/browser";
+import { supabase } from "../../lib/supabase";
 import { motion } from "framer-motion";
-
+import toast from "react-hot-toast";
 const productTypes = [
   "Macrame Bag",
   "Wall Hanging",
@@ -32,7 +33,8 @@ export default function CustomForm() {
     requirements: "",
   });
 
-  const [fileName, setFileName] = useState("");
+ const [selectedFile, setSelectedFile] = useState(null);
+const [fileName, setFileName] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 const [loading, setLoading] = useState(false);
 const [errorMessage, setErrorMessage] = useState("");
@@ -45,51 +47,143 @@ const [errorMessage, setErrorMessage] = useState("");
     }));
   }
 
-  function handleFileChange(event) {
-    const file = event.target.files?.[0];
+ function handleFileChange(event) {
+  const file = event.target.files?.[0];
 
-    setFileName(file ? file.name : "");
+  if (!file) {
+    setSelectedFile(null);
+    setFileName("");
+    return;
   }
 
-  async function handleSubmit(event) {
+ if (file.size > 5 * 1024 * 1024) {
+  toast.dismiss();
+  toast.error("Image must be under 5MB.");
+  event.target.value = "";
+  return;
+}
+
+  const allowed = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+  ];
+
+ if (!allowed.includes(file.type)) {
+  toast.dismiss();
+  toast.error("Only PNG, JPG and JPEG are allowed.");
+  event.target.value = "";
+  return;
+}
+
+  setSelectedFile(file);
+  setFileName(file.name);
+}
+
+ async function handleSubmit(event) {
   event.preventDefault();
 
   setLoading(true);
   setSuccessMessage("");
   setErrorMessage("");
 
-  const emailData = {
-    from_name: formData.name,
-    from_email: formData.email,
-    subject: `Custom Order Request - ${formData.productType}`,
-    message: `
-Phone: ${formData.phone}
+  try {
+    let imageUrl = "";
+
+    // Upload inspiration image to Supabase Storage
+    if (selectedFile) {
+      const fileExtension =
+        selectedFile.name.split(".").pop()?.toLowerCase() || "jpg";
+
+      const safeFileName = `${Date.now()}-${crypto.randomUUID()}.${fileExtension}`;
+
+      const filePath = `custom-orders/${safeFileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("custom-order-images")
+        .upload(filePath, selectedFile, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: selectedFile.type,
+        });
+
+      if (uploadError) {
+        throw new Error(
+          uploadError.message || "Image upload failed."
+        );
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("custom-order-images")
+        .getPublicUrl(filePath);
+
+      imageUrl = publicUrlData?.publicUrl || "";
+    }
+
+    // Save custom order in Supabase Database
+    const { error: databaseError } = await supabase
+      .from("custom_orders")
+      .insert({
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
+        product_type: formData.productType,
+        colour: formData.colour.trim() || null,
+        budget: formData.budget,
+        occasion: formData.occasion.trim() || null,
+        requirements: formData.requirements.trim(),
+        image_url: imageUrl || null,
+        status: "Pending",
+      });
+
+    if (databaseError) {
+      throw new Error(
+        databaseError.message ||
+          "Unable to save your custom order request."
+      );
+    }
+
+    const emailData = {
+      from_name: formData.name.trim(),
+      from_email: formData.email.trim().toLowerCase(),
+      subject: `Custom Order Request - ${formData.productType}`,
+      message: `
+Phone: ${formData.phone.trim()}
 
 Product Type: ${formData.productType}
 
-Preferred Colour: ${formData.colour || "Not specified"}
+Preferred Colour: ${formData.colour.trim() || "Not specified"}
 
 Budget: ${formData.budget}
 
-Occasion: ${formData.occasion || "Not specified"}
+Occasion: ${formData.occasion.trim() || "Not specified"}
 
-Inspiration Image: ${fileName || "Not uploaded"}
+Inspiration Image:
+${imageUrl || "Not uploaded"}
 
 Requirements:
-${formData.requirements}
-    `,
-  };
+${formData.requirements.trim()}
+      `,
+    };
 
-  try {
-  await emailjs.send(
-  import.meta.env.VITE_EMAILJS_SERVICE_ID,
-  import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-  emailData,
-  import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-);
+    // Send notification email.
+    // The order remains saved even if EmailJS temporarily fails.
+    try {
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        emailData,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+    } catch (emailError) {
+      console.error(
+        "Custom order email notification error:",
+        emailError
+      );
+    }
 
     setSuccessMessage(
-      "Thank you! Your custom order request has been sent successfully. Our team will contact you shortly."
+      "Thank you! Your custom order request has been submitted successfully. Our team will contact you shortly."
     );
 
     setFormData({
@@ -103,13 +197,15 @@ ${formData.requirements}
       requirements: "",
     });
 
+    setSelectedFile(null);
     setFileName("");
     event.target.reset();
   } catch (error) {
-    console.error("Custom order email error:", error);
+    console.error("Custom order submission error:", error);
 
     setErrorMessage(
-      "We could not send your request. Please try again or contact us on WhatsApp."
+      error?.message ||
+        "We could not submit your request. Please try again or contact us on WhatsApp."
     );
   } finally {
     setLoading(false);

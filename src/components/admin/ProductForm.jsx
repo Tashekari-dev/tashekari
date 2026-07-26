@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import toast from "react-hot-toast";
 const emptyForm = {
   name: "",
   price: "",
@@ -65,30 +65,35 @@ export default function ProductForm({
     }));
   };
 
-  const handleImageChange = (event) => {
-    const selectedFile = event.target.files?.[0];
+ const handleImageChange = (event) => {
+  const selectedFile = event.target.files?.[0];
 
-    if (!selectedFile) return;
+  if (!selectedFile) return;
 
-    if (!selectedFile.type.startsWith("image/")) {
-      alert("Please select a valid image.");
-      event.target.value = "";
-      return;
-    }
+  if (!selectedFile.type.startsWith("image/")) {
+    toast.dismiss();
+    toast.error("Please select a valid image.");
+    event.target.value = "";
+    return;
+  }
 
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      alert("Image size 5 MB se kam honi chahiye.");
-      event.target.value = "";
-      return;
-    }
+  if (selectedFile.size > 5 * 1024 * 1024) {
+    toast.dismiss();
+    toast.error("Image size must be less than 5 MB.");
+    event.target.value = "";
+    return;
+  }
 
-    if (imagePreview?.startsWith("blob:")) {
-      URL.revokeObjectURL(imagePreview);
-    }
+  if (imagePreview?.startsWith("blob:")) {
+    URL.revokeObjectURL(imagePreview);
+  }
 
-    setImageFile(selectedFile);
-    setImagePreview(URL.createObjectURL(selectedFile));
-  };
+  setImageFile(selectedFile);
+  setImagePreview(URL.createObjectURL(selectedFile));
+
+  toast.dismiss();
+  toast.success("Product image selected.");
+};
 
   const handleRemoveSelectedImage = () => {
     if (imagePreview?.startsWith("blob:")) {
@@ -110,33 +115,32 @@ export default function ProductForm({
     const price = Number(formData.price);
     const stock = Number(formData.stock || 0);
 
-    if (!name) {
-      alert("Please enter product name.");
-      return;
-    }
+  if (!name) {
+  toast.dismiss();
+  toast.error("Please enter product name.");
+  return;
+}
 
-    if (!Number.isFinite(price) || price <= 0) {
-      alert("Please enter a valid price.");
-      return;
-    }
+if (!price || Number(price) <= 0) {
+  toast.dismiss();
+  toast.error("Please enter a valid price.");
+  return;
+}
+if (!category) {
+  toast.dismiss();
+  toast.error("Please enter product category.");
+  return;
+}
 
-    if (!category) {
-      alert("Please enter product category.");
-      return;
-    }
-
-    if (
-      !Number.isFinite(stock) ||
-      stock < 0
-    ) {
-      alert(
-        "Stock zero ya usse zyada hona chahiye."
-      );
-      return;
-    }
+   if (Number(stock) < 0) {
+  toast.dismiss();
+  toast.error("Stock zero ya usse zyada hona chahiye.");
+  return;
+}
 
     if (!imageFile && !formData.image) {
-      alert("Please select a product image.");
+     toast.dismiss();
+toast.error("Please select a product image.");
       return;
     }
 

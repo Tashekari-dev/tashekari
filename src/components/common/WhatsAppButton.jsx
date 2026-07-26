@@ -1,4 +1,5 @@
 import { FaWhatsapp } from "react-icons/fa";
+
 export default function WhatsAppButton() {
   const phoneNumber = "919761452901";
 
@@ -15,9 +16,30 @@ export default function WhatsAppButton() {
       target="_blank"
       rel="noreferrer"
       aria-label="Chat with Tashekari on WhatsApp"
-     className="fixed bottom-6 right-6 z-[9997] flex h-16 w-16 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_15px_35px_rgba(37,211,102,0.35)] transition-all duration-300 hover:scale-110 hover:shadow-[0_20px_45px_rgba(37,211,102,0.5)]"
+      className="
+        fixed
+        bottom-5
+        right-5
+        md:bottom-6
+        md:right-6
+        z-40
+        flex
+        h-14
+        w-14
+        md:h-16
+        md:w-16
+        items-center
+        justify-center
+        rounded-full
+        bg-[#25D366]
+        text-white
+        shadow-lg
+        transition-all
+        duration-300
+        hover:scale-110
+      "
     >
-      <FaWhatsapp size={30} />
+      <FaWhatsapp className="text-[28px] md:text-[32px]" />
     </a>
   );
 }

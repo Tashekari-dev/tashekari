@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 
 import AnnouncementBar from "./AnnouncementBar";
 import logo from "../../assets/logo/logo.png";
+import toast from "react-hot-toast";
 
 export default function Navbar() {
   const { cartItems } = useCart();
@@ -107,13 +108,18 @@ useEffect(() => {
     setSearchOpen(false);
     setSearchTerm("");
   }
-  async function handleCustomerLogout() {
+ async function handleCustomerLogout() {
   try {
     await logout();
     setMenuOpen(false);
+
+    toast.dismiss();
+    toast.success("Logged out successfully.");
   } catch (error) {
     console.error("Customer logout error:", error);
-    alert(error.message || "Unable to logout.");
+
+    toast.dismiss();
+    toast.error(error.message || "Unable to logout.");
   }
 }
 
@@ -136,10 +142,10 @@ useEffect(() => {
   <img
     src={logo}
     alt="Tashekari"
-    className="h-14 w-14 rounded-full object-cover"
+    className="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover"
   />
 
-  <span className="font-heading text-3xl font-semibold text-primary">
+  <span className="font-heading text-[2rem] sm:text-3xl font-semibold text-primary">
     Tashekari
   </span>
 </Link>
@@ -174,7 +180,7 @@ useEffect(() => {
           </li>
         </ul>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
@@ -212,7 +218,7 @@ useEffect(() => {
             <FaHeart size={18} />
 
             {wishlistCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-red-500 px-1 font-body text-[10px] text-white">
+              <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-red-500 px-1 font-body text-[10px] text-white">
                 {wishlistCount}
               </span>
             )}
@@ -254,7 +260,7 @@ useEffect(() => {
             Cart
 
             {cartCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-red-500 px-1 font-body text-[10px] text-white">
+              <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-red-500 px-1 font-body text-[10px] text-white">
                 {cartCount}
               </span>
             )}

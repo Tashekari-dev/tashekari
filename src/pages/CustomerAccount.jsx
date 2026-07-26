@@ -5,6 +5,7 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import toast from "react-hot-toast";
 
 export default function CustomerAccount() {
   const { user, authLoading, logout } = useAuth();
@@ -71,13 +72,14 @@ export default function CustomerAccount() {
       navigate("/", {
         replace: true,
       });
-    } catch (logoutError) {
-      console.error("Customer logout error:", logoutError);
-      alert(
-        logoutError?.message ||
-          "Unable to logout."
-      );
-    }
+    }catch (logoutError) {
+  console.error("Customer logout error:", logoutError);
+  toast.dismiss();
+  toast.error(
+    logoutError?.message ||
+    "Unable to logout."
+  );
+}
   }
 
   if (authLoading) {

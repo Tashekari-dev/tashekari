@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import toast from "react-hot-toast";
 
 const CartContext = createContext(null);
 
@@ -36,10 +37,16 @@ export function CartProvider({ children }) {
       );
     } catch (error) {
       console.error("Unable to save cart:", error);
+      toast.error("Unable to save your cart.");
     }
   }, [cartItems]);
 
   function addToCart(product) {
+    if (!product?.id) {
+      toast.error("Unable to add this product.");
+      return;
+    }
+
     setCartItems((prevItems) => {
       const existingItem = prevItems.find(
         (item) => item.id === product.id
@@ -64,6 +71,11 @@ export function CartProvider({ children }) {
         },
       ];
     });
+
+    toast.dismiss();
+    toast.success(
+      `${product.name || "Product"} added to cart.`
+    );
   }
 
   function increaseQuantity(id) {
@@ -79,29 +91,65 @@ export function CartProvider({ children }) {
     );
   }
 
-  function decreaseQuantity(id) {
-    setCartItems((prevItems) =>
-      prevItems
-        .map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                quantity: item.quantity - 1,
-              }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
+ function decreaseQuantity(id) {
+  const selectedItem = cartItems.find(
+    (item) => item.id === id
+  );
+
+  if (!selectedItem) {
+    toast.error("Product not found in cart.");
+    return;
+  }
+
+  setCartItems((prevItems) =>
+    prevItems
+      .map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: item.quantity - 1,
+            }
+          : item
+      )
+      .filter((item) => item.quantity > 0)
+  );
+
+  if (selectedItem.quantity === 1) {
+    toast.dismiss();
+    toast.success(
+      `${selectedItem.name || "Product"} removed from cart.`
     );
   }
+}
 
   function removeFromCart(id) {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item.id !== id)
-    );
+  const selectedItem = cartItems.find(
+    (item) => item.id === id
+  );
+
+  if (!selectedItem) {
+    toast.error("Product not found in cart.");
+    return;
   }
 
+  setCartItems((prevItems) =>
+    prevItems.filter((item) => item.id !== id)
+  );
+  toast.dismiss();
+  toast.success(
+    `${selectedItem.name || "Product"} removed from cart.`
+  );
+}
+
   function clearCart() {
+    if (cartItems.length === 0) {
+      toast.error("Your cart is already empty.");
+      return;
+    }
+
     setCartItems([]);
+    toast.dismiss();
+    toast.success("Cart cleared successfully.");
   }
 
   const cartCount = useMemo(() => {

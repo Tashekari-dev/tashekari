@@ -9,6 +9,7 @@ import { useCart } from "../context/CartContext";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/common/ProductCard";
+import toast from "react-hot-toast";
 
 export default function Product() {
   const { id } = useParams();
@@ -140,10 +141,12 @@ ${url}`;
 async function copyLink() {
   try {
     await navigator.clipboard.writeText(window.location.href);
-    alert("Product link copied successfully.");
+   toast.dismiss();
+toast.success("Product link copied successfully.");
   } catch (error) {
     console.error("Unable to copy product link:", error);
-    alert("Unable to copy the link. Please copy it from the address bar.");
+   toast.dismiss();
+toast.error("Unable to copy the link. Please copy it from the address bar.");
   }
 }
 if (loading) {

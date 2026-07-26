@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { supabase } from "../../lib/supabase";
+import toast from "react-hot-toast";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -52,7 +53,8 @@ async function handleAddProduct(event) {
     !description.trim() ||
     !imageFile
   ) {
-    alert("Please fill all required fields and select an image.");
+    toast.dismiss();
+toast.error("Please fill all required fields and select an image.");
     return;
   }
 
@@ -99,7 +101,8 @@ async function handleAddProduct(event) {
       throw insertError;
     }
 
-    alert("Product added successfully.");
+    toast.dismiss();
+toast.success("Product added successfully.");
 
     setProductName("");
     setCategory("");
@@ -114,7 +117,8 @@ async function handleAddProduct(event) {
     await fetchProducts();
   } catch (error) {
     console.error("Error adding product:", error);
-    alert(error.message || "Unable to add product.");
+    toast.dismiss();
+toast.error(error.message || "Unable to add product.");
   } finally {
     setSaving(false);
   }
@@ -145,7 +149,8 @@ async function handleUpdateProduct(event) {
     !stock ||
     !description.trim()
   ) {
-    alert("Please fill all required fields.");
+    toast.dismiss();
+toast.error("Please fill all required fields.");
     return;
   }
 
@@ -193,7 +198,8 @@ async function handleUpdateProduct(event) {
 
     if (error) throw error;
 
-    alert("Product updated successfully.");
+    toast.dismiss();
+toast.success("Product updated successfully.");
 
     setShowModal(false);
     setEditingId(null);
@@ -202,7 +208,8 @@ async function handleUpdateProduct(event) {
 
   } catch (error) {
     console.error(error);
-    alert(error.message);
+    toast.dismiss();
+toast.error(error.message || "Unable to update product.");
   } finally {
     setSaving(false);
   }
@@ -240,7 +247,8 @@ async function handleDeleteProduct() {
       throw databaseError;
     }
 
-    alert("Product and image deleted successfully.");
+    toast.dismiss();
+toast.success("Product and image deleted successfully.");
 
     setDeleteProduct(null);
 
@@ -248,10 +256,11 @@ async function handleDeleteProduct() {
   } catch (error) {
     console.error("Error deleting product:", error);
 
-    alert(
-      error.message ||
-        "Unable to delete product and image."
-    );
+  toast.dismiss();
+toast.error(
+  error.message ||
+  "Unable to delete product and image."
+);
   } finally {
     setDeleting(false);
   }

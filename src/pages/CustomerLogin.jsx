@@ -9,6 +9,7 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { signIn } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function CustomerLogin() {
   const [email, setEmail] = useState("");
@@ -59,12 +60,16 @@ export default function CustomerLogin() {
 
     try {
       setSubmitting(true);
+await signIn(cleanEmail, password);
 
-      await signIn(cleanEmail, password);
+toast.dismiss();
+toast.success("Logged in successfully.");
 
-      navigate(redirectPath, {
-        replace: true,
-      });
+setTimeout(() => {
+  navigate(redirectPath, {
+    replace: true,
+  });
+}, 800);
     } catch (loginError) {
       console.error("Customer login error:", loginError);
 
