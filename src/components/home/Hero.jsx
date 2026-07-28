@@ -2,8 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 import bag12 from "../../assets/products/bag12.jpeg";
-import bag13 from "../../assets/products/bag13.jpeg";
-
+import heroKeychains from "../../assets/products/hero-keychains.jpeg";
 export default function Hero() {
   return (
     <section className="relative min-h-screen overflow-hidden bg-background pt-32 pb-20">
@@ -99,8 +98,8 @@ export default function Hero() {
             className="absolute bottom-4 left-0 h-[280px] w-[48%] overflow-hidden rounded-[30px] border-[8px] border-background shadow-[0_25px_60px_rgba(0,0,0,0.18)] md:h-[350px]"
           >
             <img
-              src={bag13}
-              alt="Handcrafted Tashekari macrame bag"
+              src={heroKeychains}
+              alt="Tashekari handmade macrame keychains"
               className="h-full w-full object-cover"
             />
           </motion.div>

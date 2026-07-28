@@ -11,6 +11,8 @@ import OrderSuccess from "./pages/OrderSuccess";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import CustomOrder from "./pages/CustomOrder";
+import PublicCollections from "./pages/Collections";
+import CollectionDetails from "./pages/CollectionDetails";
 
 import CustomerLogin from "./pages/CustomerLogin";
 import CustomerAccount from "./pages/CustomerAccount";
@@ -29,6 +31,7 @@ import AdminLogin from "./pages/admin/Login";
 import Orders from "./pages/admin/Orders";
 import CustomOrders from "./pages/admin/CustomOrders";
 import Products from "./pages/admin/Products";
+import AdminCollections from "./pages/admin/Collections";
 import Settings from "./pages/admin/Settings";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
@@ -67,6 +70,16 @@ function App() {
         <Route path="/" element={<Home />} />
 
         <Route path="/shop" element={<Shop />} />
+
+        <Route
+          path="/collections"
+          element={<PublicCollections />}
+        />
+
+        <Route
+          path="/collections/:slug"
+          element={<CollectionDetails />}
+        />
 
         <Route
           path="/product/:id"
@@ -179,20 +192,30 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
-  path="/admin/custom-orders"
-  element={
-    <ProtectedRoute>
-      <CustomOrders />
-    </ProtectedRoute>
-  }
-/>
+          path="/admin/custom-orders"
+          element={
+            <ProtectedRoute>
+              <CustomOrders />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/admin/products"
           element={
             <ProtectedRoute>
               <Products />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/collections"
+          element={
+            <ProtectedRoute>
+              <AdminCollections />
             </ProtectedRoute>
           }
         />

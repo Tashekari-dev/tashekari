@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { FaHeart } from "react-icons/fa";
+import { FaHeart, FaSignOutAlt, FaUser } from "react-icons/fa";
 
 import { getProducts } from "../../services/productService.js";
 import { useCart } from "../../context/CartContext";
@@ -133,35 +133,42 @@ useEffect(() => {
     >
       <AnnouncementBar />
 
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 md:py-5 lg:px-10">
+      <nav className="mx-auto flex w-full max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-6 md:py-5 lg:px-8 xl:px-10">
       <Link
   to="/"
   onClick={() => setMenuOpen(false)}
-  className="flex shrink-0 items-center gap-3"
+  className="flex shrink-0 items-center gap-2.5"
 >
   <img
     src={logo}
     alt="Tashekari"
-    className="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover"
+    className="h-11 w-11 rounded-full object-cover sm:h-12 sm:w-12 xl:h-14 xl:w-14"
   />
 
-  <span className="font-heading text-[2rem] sm:text-3xl font-semibold text-primary">
+  <span className="font-heading text-2xl font-semibold text-primary sm:text-[1.7rem] xl:text-3xl">
     Tashekari
   </span>
 </Link>
 
-        <ul className="hidden items-center gap-9 font-body text-xs uppercase tracking-[0.24em] md:flex lg:gap-11">
+        <ul className="hidden min-w-0 flex-1 items-center justify-center gap-4 font-body text-[11px] uppercase tracking-[0.16em] lg:flex xl:gap-6 xl:text-xs xl:tracking-[0.2em] 2xl:gap-9">
           <li>
             <NavLink to="/" className={desktopLinkClass}>
               Home
             </NavLink>
           </li>
 
-          <li>
-            <NavLink to="/shop" className={desktopLinkClass}>
-              Shop
-            </NavLink>
-          </li>
+       <li>
+  <NavLink to="/shop" className={desktopLinkClass}>
+    Shop
+  </NavLink>
+</li>
+
+<li>
+  <NavLink to="/collections" className={desktopLinkClass}>
+    Collections
+  </NavLink>
+</li>
+
 <li>
   <NavLink to="/custom-order" className={desktopLinkClass}>
     Custom Orders
@@ -180,12 +187,12 @@ useEffect(() => {
           </li>
         </ul>
 
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 xl:gap-2.5">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
             aria-label="Search products"
-            className="hidden h-11 w-11 items-center justify-center rounded-full border border-primary/10 text-primary transition duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-white md:flex"
+            className="hidden h-11 w-11 items-center justify-center rounded-full border border-primary/10 text-primary transition duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-white lg:flex"
           >
             <svg
               viewBox="0 0 24 24"
@@ -229,24 +236,26 @@ useEffect(() => {
       <Link
         to="/account"
         title={user?.email || "Customer account"}
-        className="hidden rounded-full border border-primary/15 px-4 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:block"
+        aria-label="Open customer account"
+        className="hidden h-11 w-11 items-center justify-center rounded-full border border-primary/15 text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:flex"
       >
-        My Account
+        <FaUser size={15} />
       </Link>
 
       <button
         type="button"
         onClick={handleCustomerLogout}
         title="Logout"
-        className="hidden rounded-full border border-primary/15 px-4 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:block"
+        aria-label="Logout"
+        className="hidden h-11 w-11 items-center justify-center rounded-full border border-primary/15 text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:flex"
       >
-        Logout
+        <FaSignOutAlt size={15} />
       </button>
     </>
   ) : (
     <Link
       to="/login"
-      className="hidden rounded-full border border-primary/15 px-4 py-3 font-body text-sm font-medium text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:block"
+      className="hidden rounded-full border border-primary/15 px-4 py-3 font-body text-xs font-medium text-primary transition duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white lg:block"
     >
       Login
     </Link>
@@ -254,7 +263,7 @@ useEffect(() => {
           <Link
         
             to="/cart"
-            className="relative rounded-full bg-primary px-4 py-3 font-body text-sm font-medium text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#4E3829] sm:px-6"
+            className="relative rounded-full bg-primary px-4 py-3 font-body text-sm font-medium text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#4E3829] xl:px-5"
           >
             
             Cart
@@ -269,7 +278,7 @@ useEffect(() => {
           <button
             type="button"
             onClick={() => setMenuOpen((current) => !current)}
-            className="relative flex h-11 w-11 items-center justify-center rounded-full border border-primary/15 text-primary transition hover:bg-primary hover:text-white md:hidden"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full border border-primary/15 text-primary transition hover:bg-primary hover:text-white lg:hidden"
             aria-label="Toggle navigation menu"
             aria-expanded={menuOpen}
           >
@@ -297,7 +306,7 @@ useEffect(() => {
       </nav>
 
      <div
-  className={`overflow-y-auto border-t border-primary/10 bg-background transition-all duration-300 md:hidden ${
+  className={`overflow-y-auto border-t border-primary/10 bg-background transition-all duration-300 lg:hidden ${
     menuOpen
       ? "max-h-[calc(100vh-120px)] opacity-100"
       : "max-h-0 overflow-hidden border-transparent opacity-0"
@@ -311,14 +320,22 @@ useEffect(() => {
           >
             Home
           </NavLink>
+<NavLink
+  to="/shop"
+  onClick={() => setMenuOpen(false)}
+  className="border-b border-primary/10 py-4"
+>
+  Shop
+</NavLink>
 
-          <NavLink
-            to="/shop"
-            onClick={() => setMenuOpen(false)}
-            className="border-b border-primary/10 py-4"
-          >
-            Shop
-          </NavLink>
+<NavLink
+  to="/collections"
+  onClick={() => setMenuOpen(false)}
+  className="border-b border-primary/10 py-4"
+>
+  Collections
+</NavLink>
+
 <NavLink
   to="/custom-order"
   onClick={() => setMenuOpen(false)}
@@ -326,6 +343,7 @@ useEffect(() => {
 >
   Custom Orders
 </NavLink>
+
           <NavLink
             to="/wishlist"
             onClick={() => setMenuOpen(false)}

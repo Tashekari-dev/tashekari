@@ -4,6 +4,7 @@ import {
   FaChartPie,
   FaClipboardList,
   FaCog,
+  FaLayerGroup,
   FaSignOutAlt,
   FaShoppingBag,
 } from "react-icons/fa";
@@ -53,6 +54,11 @@ export default function AdminLayout({ children }) {
       label: "Products",
       path: "/admin/products",
       icon: <FaBoxOpen />,
+    },
+    {
+      label: "Collections",
+      path: "/admin/collections",
+      icon: <FaLayerGroup />,
     },
     {
       label: "Settings",

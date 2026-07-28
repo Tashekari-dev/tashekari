@@ -1,15 +1,80 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { FaWhatsapp, FaLink } from "react-icons/fa";
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaExpand,
+  FaLink,
+  FaTimes,
+  FaWhatsapp,
+} from "react-icons/fa";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 import { getProductById } from "../services/productService.js";
+import { supabase } from "../lib/supabase.js";
 import { useCart } from "../context/CartContext";
 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import ProductCard from "../components/common/ProductCard";
-import toast from "react-hot-toast";
+
+function normalizeGalleryImages(product) {
+  if (!product) return [];
+
+  let galleryImages = [];
+
+  if (Array.isArray(product.images)) {
+    galleryImages = product.images;
+  } else if (typeof product.images === "string" && product.images.trim()) {
+    try {
+      const parsedImages = JSON.parse(product.images);
+      galleryImages = Array.isArray(parsedImages) ? parsedImages : [];
+    } catch {
+      galleryImages = [];
+    }
+  }
+
+  return [...new Set([product.image, ...galleryImages].filter(Boolean))];
+}
+
+function normalizeTags(tags) {
+  if (Array.isArray(tags)) {
+    return tags.map((tag) => String(tag).trim()).filter(Boolean);
+  }
+
+  if (typeof tags === "string") {
+    return tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function formatPrice(price) {
+  if (price === null || price === undefined || price === "") {
+    return "₹0";
+  }
+
+  // Agar price pehle se ₹ ke saath string hai
+  if (typeof price === "string") {
+    if (price.includes("₹")) {
+      return price;
+    }
+
+    const cleaned = Number(price.replace(/,/g, ""));
+
+    if (!Number.isNaN(cleaned)) {
+      return `₹${cleaned.toLocaleString("en-IN")}`;
+    }
+
+    return price;
+  }
+
+  return `₹${Number(price).toLocaleString("en-IN")}`;
+}
 
 export default function Product() {
   const { id } = useParams();
@@ -21,147 +86,274 @@ export default function Product() {
   const [activeTab, setActiveTab] = useState("description");
 
   const [product, setProduct] = useState(null);
-const [products, setProducts] = useState([]);
-const [loading, setLoading] = useState(true);
+ 
+  const [products, setProducts] = useState([]);
+  const [recentProducts, setRecentProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const relatedProducts = useMemo(() => {
-  if (!product) return [];
+  const [activeImage, setActiveImage] = useState("");
+  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
 
-  return products
-    .filter(
-      (item) =>
-        item.category === product.category &&
-        item.id !== product.id
-    )
-    .slice(0, 3);
-}, [product, products]);
+  const galleryImages = useMemo(
+    () => normalizeGalleryImages(product),
+    [product]
+  );
 
-const recentProducts = useMemo(() => {
-  if (!product) return [];
+  const tags = useMemo(() => normalizeTags(product?.tags), [product]);
 
-  try {
-    const savedProducts = localStorage.getItem("recent-products");
-    const viewedProducts = savedProducts
-      ? JSON.parse(savedProducts)
-      : [];
+  const stock = Number(product?.stock || 0);
+  const isOutOfStock = stock <= 0;
+  const isLowStock = stock > 0 && stock <= 5;
 
-    return viewedProducts
-      .filter((item) => item.id !== product.id)
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+
+    return products
+      .filter(
+        (item) =>
+          item.category === product.category &&
+          String(item.id) !== String(product.id)
+      )
       .slice(0, 3);
-  } catch (error) {
-    console.error("Recently viewed products error:", error);
-    return [];
+  }, [product, products]);
+
+  const activeImageIndex = useMemo(
+    () => galleryImages.findIndex((image) => image === activeImage),
+    [galleryImages, activeImage]
+  );
+
+  useEffect(() => {
+    async function fetchProductData() {
+      try {
+        setLoading(true);
+        setProduct(null);
+        setQuantity(1);
+        setActiveTab("description");
+
+        const [{ data: productsData, error: productsError }, selectedProduct] =
+          await Promise.all([
+            supabase
+              .from("products")
+              .select("*")
+              .order("created_at", { ascending: false }),
+            getProductById(id),
+          ]);
+
+        if (productsError) throw productsError;
+
+        const allProducts = productsData || [];
+        setProducts(allProducts);
+
+        const finalProduct =
+          selectedProduct ||
+          allProducts.find((item) => String(item.id) === String(id)) ||
+          null;
+
+        setProduct(finalProduct);
+      } catch (error) {
+        console.error("Product fetch error:", error);
+
+        try {
+          const { data, error: fallbackError } = await supabase
+            .from("products")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle();
+
+          if (fallbackError) throw fallbackError;
+
+          setProduct(data || null);
+        } catch (fallbackError) {
+          console.error("Product fallback fetch error:", fallbackError);
+          setProduct(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProductData();
+  }, [id]);
+
+  useEffect(() => {
+    if (!product) {
+      setActiveImage("");
+      return;
+    }
+
+    const images = normalizeGalleryImages(product);
+    setActiveImage(images[0] || "");
+  }, [product]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    try {
+      const savedProducts = localStorage.getItem("recent-products");
+      const viewedProducts = savedProducts
+        ? JSON.parse(savedProducts)
+        : [];
+
+      const previousProducts = Array.isArray(viewedProducts)
+        ? viewedProducts
+        : [];
+
+      setRecentProducts(
+        previousProducts
+          .filter((item) => String(item.id) !== String(product.id))
+          .slice(0, 3)
+      );
+
+      const filteredProducts = previousProducts.filter(
+        (item) => String(item.id) !== String(product.id)
+      );
+
+      const productToStore = {
+        id: product.id,
+        image: product.image,
+        name: product.name,
+        price: product.price,
+        category: product.category,
+        bestseller: product.bestseller,
+      };
+
+      localStorage.setItem(
+        "recent-products",
+        JSON.stringify([productToStore, ...filteredProducts].slice(0, 6))
+      );
+    } catch (error) {
+      console.error("Unable to save recently viewed products:", error);
+    }
+  }, [product]);
+
+  useEffect(() => {
+    if (!isImagePreviewOpen) return undefined;
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        setIsImagePreviewOpen(false);
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isImagePreviewOpen]);
+
+  function decreaseQuantity() {
+    setQuantity((current) => Math.max(1, current - 1));
   }
-}, [product]);
-useEffect(() => {
- async function fetchProduct() {
-  try {
-    const selectedProduct = await getProductById(id);
 
-    setProduct(selectedProduct || null);
-  } catch (error) {
-    console.error("Product fetch error:", error);
-
-    const localProduct = products.find(
-      (item) => String(item.id) === String(id)
-    );
-
-    setProduct(localProduct || null);
-  } finally {
-    setLoading(false);
+  function increaseQuantity() {
+    setQuantity((current) => Math.min(Math.max(stock, 1), current + 1));
   }
-}
-
-  fetchProduct();
-}, [id, products]);
-
-useEffect(() => {
-  if (!product) return;
-
-  try {
-    const savedProducts = localStorage.getItem("recent-products");
-    const viewedProducts = savedProducts
-      ? JSON.parse(savedProducts)
-      : [];
-
-    const filteredProducts = viewedProducts.filter(
-      (item) => item.id !== product.id
-    );
-
-    const updatedProducts = [
-      product,
-      ...filteredProducts,
-    ].slice(0, 6);
-
-    localStorage.setItem(
-      "recent-products",
-      JSON.stringify(updatedProducts)
-    );
-  } catch (error) {
-    console.error("Unable to save recently viewed products:", error);
-  }
-}, [product]);
 
   function handleAddToCart() {
+    if (!product || isOutOfStock) {
+      toast.dismiss();
+      toast.error("This product is currently out of stock.");
+      return;
+    }
+
     for (let count = 0; count < quantity; count += 1) {
       addToCart(product);
     }
 
     setAdded(true);
+    toast.dismiss();
+    toast.success(`${quantity} item${quantity > 1 ? "s" : ""} added to cart.`);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setAdded(false);
     }, 1800);
   }
 
   function handleBuyNow() {
+    if (!product || isOutOfStock) {
+      toast.dismiss();
+      toast.error("This product is currently out of stock.");
+      return;
+    }
+
     for (let count = 0; count < quantity; count += 1) {
       addToCart(product);
     }
 
     navigate("/checkout");
   }
-  function shareWhatsApp() {
-  const url = window.location.href;
 
-  const message = `Check out this handmade product from Tashekari ❤️
+  function shareWhatsApp() {
+    const url = window.location.href;
+
+    const message = `Check out this handmade product from Tashekari ❤️
 
 ${product.name}
-${product.price}
+${formatPrice(product.price)}
 
 ${url}`;
 
-  window.open(
-    `https://wa.me/?text=${encodeURIComponent(message)}`,
-    "_blank",
-    "noopener,noreferrer"
-  );
-}
-
-async function copyLink() {
-  try {
-    await navigator.clipboard.writeText(window.location.href);
-   toast.dismiss();
-toast.success("Product link copied successfully.");
-  } catch (error) {
-    console.error("Unable to copy product link:", error);
-   toast.dismiss();
-toast.error("Unable to copy the link. Please copy it from the address bar.");
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   }
-}
-if (loading) {
-  return (
-    <>
-      <Navbar />
-      <main className="flex min-h-screen items-center justify-center">
-        <h2 className="text-2xl font-semibold text-primary">
-          Loading...
-        </h2>
-      </main>
-      <Footer />
-    </>
-  );
-}
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.dismiss();
+      toast.success("Product link copied successfully.");
+    } catch (error) {
+      console.error("Unable to copy product link:", error);
+      toast.dismiss();
+      toast.error("Unable to copy the link. Please copy it from the address bar.");
+    }
+  }
+
+  function showPreviousImage() {
+    if (galleryImages.length <= 1) return;
+
+    const currentIndex = activeImageIndex >= 0 ? activeImageIndex : 0;
+    const previousIndex =
+      currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1;
+
+    setActiveImage(galleryImages[previousIndex]);
+  }
+
+  function showNextImage() {
+    if (galleryImages.length <= 1) return;
+
+    const currentIndex = activeImageIndex >= 0 ? activeImageIndex : 0;
+    const nextIndex =
+      currentIndex === galleryImages.length - 1 ? 0 : currentIndex + 1;
+
+    setActiveImage(galleryImages[nextIndex]);
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+
+        <main className="flex min-h-screen items-center justify-center bg-background px-6 pt-28">
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+            <h2 className="mt-5 font-heading text-3xl font-semibold text-primary">
+              Loading product...
+            </h2>
+          </div>
+        </main>
+
+        <Footer />
+      </>
+    );
+  }
+
   if (!product) {
     return (
       <>
@@ -196,7 +388,7 @@ if (loading) {
       <Navbar />
 
       <main className="bg-background pt-28">
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-10">
             <div className="mb-8 flex flex-wrap items-center gap-2 font-body text-sm text-[#817267]">
               <Link to="/" className="transition hover:text-primary">
@@ -214,7 +406,7 @@ if (loading) {
               <span className="text-primary">{product.name}</span>
             </div>
 
-            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+            <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
               <motion.div
                 initial={{ opacity: 0, x: -40 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -223,17 +415,81 @@ if (loading) {
               >
                 <div className="absolute -left-10 -top-10 h-72 w-72 rounded-full bg-light/80 blur-[120px]" />
 
-                <div className="relative overflow-hidden rounded-[40px] bg-white shadow-2xl">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-[540px] w-full object-cover transition duration-700 hover:scale-105 md:h-[700px]"
-                  />
+                <div className="relative">
+                  <div className="group relative overflow-hidden rounded-[34px] bg-white shadow-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setIsImagePreviewOpen(true)}
+                      className="block w-full cursor-zoom-in"
+                      aria-label="Open full product image"
+                    >
+                      <img
+                        src={activeImage || product.image}
+                        alt={product.name}
+                        className="h-[480px] w-full object-cover transition duration-700 group-hover:scale-110 sm:h-[620px] md:h-[720px]"
+                      />
+                    </button>
 
-                  {product.bestseller && (
-                    <span className="absolute left-6 top-6 rounded-full bg-primary px-5 py-2 font-body text-xs uppercase tracking-[0.2em] text-white shadow-lg">
-                      Bestseller
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsImagePreviewOpen(true)}
+                      className="absolute right-5 top-5 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur transition hover:scale-105 hover:bg-white"
+                      aria-label="Expand product image"
+                    >
+                      <FaExpand size={17} />
+                    </button>
+
+                    {product.bestseller && (
+                      <span className="absolute left-5 top-5 rounded-full bg-primary px-5 py-2 font-body text-xs uppercase tracking-[0.2em] text-white shadow-lg">
+                        Bestseller
+                      </span>
+                    )}
+
+                    {galleryImages.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={showPreviousImage}
+                          className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur transition hover:bg-white"
+                          aria-label="Previous image"
+                        >
+                          <FaChevronLeft size={15} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={showNextImage}
+                          className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur transition hover:bg-white"
+                          aria-label="Next image"
+                        >
+                          <FaChevronRight size={15} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {galleryImages.length > 1 && (
+                    <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
+                      {galleryImages.map((image, index) => (
+                        <button
+                          type="button"
+                          key={`${image}-${index}`}
+                          onClick={() => setActiveImage(image)}
+                          className={`shrink-0 overflow-hidden rounded-2xl border-2 transition ${
+                            activeImage === image
+                              ? "border-primary shadow-lg"
+                              : "border-transparent opacity-75 hover:opacity-100"
+                          }`}
+                          aria-label={`View product image ${index + 1}`}
+                        >
+                          <img
+                            src={image}
+                            alt={`${product.name} view ${index + 1}`}
+                            className="h-24 w-24 object-cover sm:h-28 sm:w-28"
+                          />
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -242,7 +498,7 @@ if (loading) {
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.7 }}
-                className="rounded-[40px] bg-white p-7 shadow-xl sm:p-10"
+                className="h-fit rounded-[40px] bg-white p-7 shadow-xl sm:p-10 lg:sticky lg:top-32"
               >
                 <p className="font-body text-xs uppercase tracking-[0.35em] text-secondary">
                   {product.category} Collection
@@ -252,13 +508,31 @@ if (loading) {
                   {product.name}
                 </h1>
 
-                <div className="mt-6 flex items-center gap-4">
+                {product.sku && (
+                  <p className="mt-3 font-body text-xs uppercase tracking-[0.2em] text-[#918277]">
+                    SKU: {product.sku}
+                  </p>
+                )}
+
+                <div className="mt-6 flex flex-wrap items-center gap-4">
                   <p className="font-heading text-4xl font-semibold text-secondary">
-                    {product.price}
+                    {formatPrice(product.price)}
                   </p>
 
-                  <span className="rounded-full bg-cream px-4 py-2 font-body text-xs text-primary">
-                    In Stock
+                  <span
+                    className={`rounded-full px-4 py-2 font-body text-xs font-medium ${
+                      isOutOfStock
+                        ? "bg-red-100 text-red-700"
+                        : isLowStock
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {isOutOfStock
+                      ? "Out of Stock"
+                      : isLowStock
+                      ? `Only ${stock} Left`
+                      : "In Stock"}
                   </span>
                 </div>
 
@@ -270,10 +544,8 @@ if (loading) {
                 </div>
 
                 <p className="mt-8 font-body text-base leading-8 text-[#6F6258]">
-                  Carefully handcrafted using premium cotton cords and
-                  sustainable materials. Each piece is made with patience,
-                  creativity and attention to detail, making it perfect for
-                  everyday use and thoughtful gifting.
+                  {product.description ||
+                    "Carefully handcrafted using premium materials. Each piece is made with patience, creativity and attention to detail, making it perfect for everyday use and thoughtful gifting."}
                 </p>
 
                 <div className="mt-8 grid grid-cols-3 gap-3 text-center">
@@ -304,10 +576,9 @@ if (loading) {
                   <div className="mt-3 flex w-fit items-center rounded-full border border-primary/15 bg-background p-1">
                     <button
                       type="button"
-                      onClick={() =>
-                        setQuantity((current) => Math.max(1, current - 1))
-                      }
-                      className="flex h-11 w-11 items-center justify-center rounded-full font-body text-xl text-primary transition hover:bg-white"
+                      onClick={decreaseQuantity}
+                      disabled={isOutOfStock || quantity <= 1}
+                      className="flex h-11 w-11 items-center justify-center rounded-full font-body text-xl text-primary transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       −
                     </button>
@@ -318,10 +589,9 @@ if (loading) {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        setQuantity((current) => current + 1)
-                      }
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-primary font-body text-xl text-white transition hover:bg-[#4E3829]"
+                      onClick={increaseQuantity}
+                      disabled={isOutOfStock || quantity >= stock}
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-primary font-body text-xl text-white transition hover:bg-[#4E3829] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       +
                     </button>
@@ -331,41 +601,50 @@ if (loading) {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className={`mt-9 w-full rounded-full py-5 font-body text-base font-medium text-white shadow-lg transition duration-300 hover:-translate-y-1 ${
-                    added
+                  disabled={isOutOfStock}
+                  className={`mt-9 w-full rounded-full py-5 font-body text-base font-medium text-white shadow-lg transition duration-300 ${
+                    isOutOfStock
+                      ? "cursor-not-allowed bg-gray-400"
+                      : added
                       ? "bg-secondary"
-                      : "bg-primary hover:bg-[#4E3829]"
+                      : "bg-primary hover:-translate-y-1 hover:bg-[#4E3829]"
                   }`}
                 >
-                  {added ? "Added To Cart ✓" : "Add To Cart"}
+                  {isOutOfStock
+                    ? "Out of Stock"
+                    : added
+                    ? "Added To Cart ✓"
+                    : "Add To Cart"}
                 </button>
 
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="mt-4 w-full rounded-full border border-primary py-5 text-center font-body text-base font-medium text-primary transition hover:bg-primary hover:text-white"
+                  disabled={isOutOfStock}
+                  className="mt-4 w-full rounded-full border border-primary py-5 text-center font-body text-base font-medium text-primary transition hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-transparent"
                 >
                   Buy Now
                 </button>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-  <button
-    type="button"
-    onClick={shareWhatsApp}
-    className="flex items-center justify-center gap-2 rounded-full bg-[#25D366] py-4 font-body font-medium text-white transition duration-300 hover:-translate-y-1 hover:bg-[#1EBC5A]"
-  >
-    <FaWhatsapp size={19} />
-    Share on WhatsApp
-  </button>
 
-  <button
-    type="button"
-    onClick={copyLink}
-    className="flex items-center justify-center gap-2 rounded-full border border-primary py-4 font-body font-medium text-primary transition duration-300 hover:-translate-y-1 hover:bg-primary hover:text-white"
-  >
-    <FaLink size={16} />
-    Copy Product Link
-  </button>
-</div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={shareWhatsApp}
+                    className="flex items-center justify-center gap-2 rounded-full bg-[#25D366] py-4 font-body font-medium text-white transition duration-300 hover:-translate-y-1 hover:bg-[#1EBC5A]"
+                  >
+                    <FaWhatsapp size={19} />
+                    Share on WhatsApp
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={copyLink}
+                    className="flex items-center justify-center gap-2 rounded-full border border-primary py-4 font-body font-medium text-primary transition duration-300 hover:-translate-y-1 hover:bg-primary hover:text-white"
+                  >
+                    <FaLink size={16} />
+                    Copy Product Link
+                  </button>
+                </div>
 
                 <div className="mt-9 space-y-4 border-t border-primary/10 pt-7 font-body text-sm text-[#6F6258]">
                   <p>✓ Secure checkout</p>
@@ -375,183 +654,201 @@ if (loading) {
 
                 <section className="mt-14">
                   <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("description")}
-                      className={`rounded-full px-6 py-3 transition ${
-                        activeTab === "description"
-                          ? "bg-primary text-white"
-                          : "bg-background text-primary"
-                      }`}
-                    >
-                      Description
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("specifications")}
-                      className={`rounded-full px-6 py-3 transition ${
-                        activeTab === "specifications"
-                          ? "bg-primary text-white"
-                          : "bg-background text-primary"
-                      }`}
-                    >
-                      Specifications
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("shipping")}
-                      className={`rounded-full px-6 py-3 transition ${
-                        activeTab === "shipping"
-                          ? "bg-primary text-white"
-                          : "bg-background text-primary"
-                      }`}
-                    >
-                      Shipping
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("care")}
-                      className={`rounded-full px-6 py-3 transition ${
-                        activeTab === "care"
-                          ? "bg-primary text-white"
-                          : "bg-background text-primary"
-                      }`}
-                    >
-                      Care
-                    </button>
+                    {[
+                      ["description", "Description"],
+                      ["specifications", "Specifications"],
+                      ["shipping", "Shipping"],
+                      ["care", "Care"],
+                    ].map(([tabId, label]) => (
+                      <button
+                        key={tabId}
+                        type="button"
+                        onClick={() => setActiveTab(tabId)}
+                        className={`rounded-full px-6 py-3 transition ${
+                          activeTab === tabId
+                            ? "bg-primary text-white"
+                            : "bg-background text-primary"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="mt-8 rounded-[30px] bg-background p-8 font-body leading-8 text-[#6F6258]">
+                  <div className="mt-8 rounded-[30px] bg-background p-7 font-body leading-8 text-[#6F6258] sm:p-8">
                     {activeTab === "description" && (
                       <p>
-                        Every Tashekari product is handcrafted using premium
-                        cotton cords, making every piece unique. Slight
-                        variations are a natural part of handmade craftsmanship.
+                        {product.description ||
+                          "Every Tashekari product is handcrafted with care, making every piece unique. Slight variations are a natural and beautiful part of handmade craftsmanship."}
                       </p>
                     )}
 
                     {activeTab === "specifications" && (
-                      <ul className="space-y-2">
-                        <li>• 100% Handmade</li>
-                        <li>• Premium Cotton Cord</li>
-                        <li>• Sustainable Materials</li>
-                        <li>• Lightweight Design</li>
-                      </ul>
+                      <div className="grid gap-3">
+                        {product.material && (
+                          <div className="flex items-start justify-between gap-5 border-b border-primary/10 pb-3">
+                            <span className="font-semibold text-primary">
+                              Material
+                            </span>
+                            <span className="text-right">{product.material}</span>
+                          </div>
+                        )}
+
+                        {product.dimensions && (
+                          <div className="flex items-start justify-between gap-5 border-b border-primary/10 pb-3">
+                            <span className="font-semibold text-primary">
+                              Dimensions
+                            </span>
+                            <span className="text-right">
+                              {product.dimensions}
+                            </span>
+                          </div>
+                        )}
+
+                        {product.weight && (
+                          <div className="flex items-start justify-between gap-5 border-b border-primary/10 pb-3">
+                            <span className="font-semibold text-primary">
+                              Weight
+                            </span>
+                            <span className="text-right">{product.weight}</span>
+                          </div>
+                        )}
+
+                        {product.sku && (
+                          <div className="flex items-start justify-between gap-5 border-b border-primary/10 pb-3">
+                            <span className="font-semibold text-primary">
+                              SKU
+                            </span>
+                            <span className="text-right">{product.sku}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-start justify-between gap-5">
+                          <span className="font-semibold text-primary">
+                            Craft
+                          </span>
+                          <span className="text-right">100% Handmade</span>
+                        </div>
+                      </div>
                     )}
 
                     {activeTab === "shipping" && (
                       <ul className="space-y-2">
-                        <li>• Dispatch within 24–48 Hours</li>
-                        <li>• Pan India Delivery</li>
-                        <li>• Secure Packaging</li>
+                        <li>• Dispatch within 24–48 hours</li>
+                        <li>• Pan India delivery</li>
+                        <li>• Secure and careful packaging</li>
                       </ul>
                     )}
 
                     {activeTab === "care" && (
                       <ul className="space-y-2">
-                        <li>• Keep away from water</li>
-                        <li>• Store in a dry place</li>
-                        <li>• Clean with a soft dry cloth</li>
+                        <li>• Keep away from excess water and moisture</li>
+                        <li>• Store in a clean and dry place</li>
+                        <li>• Gently clean using a soft, dry cloth</li>
                       </ul>
                     )}
                   </div>
                 </section>
+
+                {tags.length > 0 && (
+                  <div className="mt-8 border-t border-primary/10 pt-7">
+                    <p className="font-body text-sm font-semibold text-primary">
+                      Product Tags
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-cream px-4 py-2 font-body text-xs text-primary"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>
         </section>
 
-<section className="bg-white py-20">
-  <div className="mx-auto max-w-6xl px-6 lg:px-10">
+        <section className="bg-white py-20">
+          <div className="mx-auto max-w-6xl px-6 lg:px-10">
+            <p className="text-center font-body text-xs uppercase tracking-[0.35em] text-secondary">
+              Customer Reviews
+            </p>
 
-    <p className="text-center font-body text-xs uppercase tracking-[0.35em] text-secondary">
-      CUSTOMER REVIEWS
-    </p>
+            <h2 className="mt-4 text-center font-heading text-5xl font-semibold text-primary">
+              Loved by Customers
+            </h2>
 
-    <h2 className="mt-4 text-center font-heading text-5xl font-semibold text-primary">
-      Loved by Customers
-    </h2>
+            <div className="mt-14 grid gap-8 md:grid-cols-3">
+              {[
+                {
+                  name: "Priya Sharma",
+                  review:
+                    "Amazing craftsmanship. The quality exceeded my expectations.",
+                },
+                {
+                  name: "Aditi Mehra",
+                  review:
+                    "Beautiful handmade product. Packaging was also premium.",
+                },
+                {
+                  name: "Neha Kapoor",
+                  review:
+                    "Definitely buying again. Perfect gifting option.",
+                },
+              ].map((review) => (
+                <div
+                  key={review.name}
+                  className="rounded-[30px] bg-background p-8 shadow-lg"
+                >
+                  <div className="text-2xl text-yellow-500">★★★★★</div>
 
-    <div className="mt-14 grid gap-8 md:grid-cols-3">
+                  <p className="mt-5 leading-8 text-[#6F6258]">
+                    {review.review}
+                  </p>
 
-      <div className="rounded-[30px] bg-background p-8 shadow-lg">
-        <div className="text-2xl text-yellow-500">
-          ★★★★★
-        </div>
+                  <h4 className="mt-6 font-semibold text-primary">
+                    {review.name}
+                  </h4>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-        <p className="mt-5 text-[#6F6258] leading-8">
-          Amazing craftsmanship. The quality exceeded my expectations.
-        </p>
+        {recentProducts.length > 0 && (
+          <section className="bg-background py-20">
+            <div className="mx-auto max-w-7xl px-6 lg:px-10">
+              <div className="text-center">
+                <p className="font-body text-xs uppercase tracking-[0.35em] text-secondary">
+                  Continue Shopping
+                </p>
 
-        <h4 className="mt-6 font-semibold text-primary">
-          Priya Sharma
-        </h4>
-      </div>
+                <h2 className="mt-5 font-heading text-5xl font-semibold text-primary">
+                  Recently Viewed
+                </h2>
+              </div>
 
-      <div className="rounded-[30px] bg-background p-8 shadow-lg">
-        <div className="text-2xl text-yellow-500">
-          ★★★★★
-        </div>
-
-        <p className="mt-5 text-[#6F6258] leading-8">
-          Beautiful handmade product. Packaging was also premium.
-        </p>
-
-        <h4 className="mt-6 font-semibold text-primary">
-          Aditi Mehra
-        </h4>
-      </div>
-
-      <div className="rounded-[30px] bg-background p-8 shadow-lg">
-        <div className="text-2xl text-yellow-500">
-          ★★★★★
-        </div>
-
-        <p className="mt-5 text-[#6F6258] leading-8">
-          Definitely buying again. Perfect gifting option.
-        </p>
-
-        <h4 className="mt-6 font-semibold text-primary">
-          Neha Kapoor
-        </h4>
-      </div>
-
-    </div>
-
-  </div>
-</section>
-{recentProducts.length > 0 && (
-  <section className="bg-background py-20">
-    <div className="mx-auto max-w-7xl px-6 lg:px-10">
-      <div className="text-center">
-        <p className="font-body text-xs uppercase tracking-[0.35em] text-secondary">
-          Continue Shopping
-        </p>
-
-        <h2 className="mt-5 font-heading text-5xl font-semibold text-primary">
-          Recently Viewed
-        </h2>
-      </div>
-
-      <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {recentProducts.map((item) => (
-          <ProductCard
-            key={item.id}
-            id={item.id}
-            image={item.image}
-            name={item.name}
-            price={item.price}
-            category={item.category}
-            bestseller={item.bestseller}
-          />
-        ))}
-      </div>
-    </div>
-  </section>
-)}
+              <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {recentProducts.map((item) => (
+                  <ProductCard
+                    key={item.id}
+                    id={item.id}
+                    image={item.image}
+                    name={item.name}
+                    price={item.price}
+                    category={item.category}
+                    bestseller={item.bestseller}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {relatedProducts.length > 0 && (
           <section className="bg-white py-24">
@@ -585,6 +882,52 @@ if (loading) {
       </main>
 
       <Footer />
+
+      {isImagePreviewOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Product image preview"
+        >
+          <button
+            type="button"
+            onClick={() => setIsImagePreviewOpen(false)}
+            className="absolute right-5 top-5 flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary shadow-xl transition hover:scale-105"
+            aria-label="Close image preview"
+          >
+            <FaTimes size={18} />
+          </button>
+
+          {galleryImages.length > 1 && (
+            <button
+              type="button"
+              onClick={showPreviousImage}
+              className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-primary shadow-xl sm:left-8"
+              aria-label="Previous preview image"
+            >
+              <FaChevronLeft size={17} />
+            </button>
+          )}
+
+          <img
+            src={activeImage || product.image}
+            alt={product.name}
+            className="max-h-[88vh] max-w-[90vw] rounded-2xl object-contain"
+          />
+
+          {galleryImages.length > 1 && (
+            <button
+              type="button"
+              onClick={showNextImage}
+              className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-primary shadow-xl sm:right-8"
+              aria-label="Next preview image"
+            >
+              <FaChevronRight size={17} />
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }
