@@ -1,3 +1,7 @@
+import toast from "react-hot-toast";
+import { useCart } from "../context/CartContext";
+import InvoiceButton from "../components/common/InvoiceButton";
+import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
 import {
   Link,
@@ -8,7 +12,6 @@ import {
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "../lib/supabase";
 
 const orderSteps = [
   "Pending",
@@ -21,10 +24,12 @@ export default function CustomerOrderDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, authLoading } = useAuth();
+  const { addMultipleToCart } = useCart();
 
   const [order, setOrder] = useState(null);
   const [loadingOrder, setLoadingOrder] = useState(true);
   const [error, setError] = useState("");
+  const [cancellingOrder, setCancellingOrder] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -153,6 +158,49 @@ export default function CustomerOrderDetails() {
   const items = Array.isArray(order.items)
     ? order.items
     : [];
+    function handleBuyAgain() {
+  addMultipleToCart(items);
+
+  navigate("/cart");
+}
+
+async function handleCancelOrder() {
+  const confirmed = window.confirm(
+    "Are you sure you want to cancel this order?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setCancellingOrder(true);
+
+    const { error: cancelError } = await supabase.rpc(
+      "cancel_customer_order",
+      {
+        p_order_id: order.id,
+      }
+    );
+
+    if (cancelError) throw cancelError;
+
+    setOrder((currentOrder) => ({
+      ...currentOrder,
+      status: "Cancelled",
+    }));
+
+    toast.dismiss();
+    toast.success("Order cancelled successfully.");
+  } catch (cancelError) {
+    console.error("Cancel order error:", cancelError);
+
+    toast.dismiss();
+    toast.error(
+      cancelError?.message || "Unable to cancel this order."
+    );
+  } finally {
+    setCancellingOrder(false);
+  }
+}
 
   return (
     <>
@@ -416,9 +464,60 @@ export default function CustomerOrderDetails() {
                     {order.tracking_number ||
                       "Not available yet"}
                   </p>
+
+                  {order.tracking_number && (
+  <a
+    href={`https://www.delhivery.com/track-v2/package/${order.tracking_number}`}
+    target="_blank"
+    rel="noreferrer"
+    className="mt-5 block w-full rounded-full border border-[#6B4F3A] px-6 py-3 text-center font-body font-medium text-[#6B4F3A] transition hover:bg-[#6B4F3A] hover:text-white"
+  >
+    Track Shipment
+  </a>
+)}
+
                 </div>
               </div>
             </div>
+
+            <div className="rounded-[30px] bg-white p-6 shadow-lg">
+  <h2 className="font-heading text-3xl font-semibold text-primary">
+    Invoice
+  </h2>
+
+  <p className="mt-2 font-body text-sm text-[#75695F]">
+    Download your order invoice for your records.
+  </p>
+
+  <div className="mt-6">
+    <InvoiceButton order={order} />
+  </div>
+</div>
+{items.length > 0 && (
+  <div className="mt-4">
+    <button
+      type="button"
+      onClick={handleBuyAgain}
+      className="w-full rounded-full bg-[#6B4F3A] px-6 py-3 font-body font-medium text-white transition hover:bg-[#4E3829]"
+    >
+      Buy Again
+    </button>
+  </div>
+)}
+
+{["pending", "packed"].includes(
+  String(order.status || "Pending").toLowerCase()
+) && (
+  <button
+    type="button"
+    onClick={handleCancelOrder}
+    disabled={cancellingOrder}
+    className="w-full rounded-full border border-red-500 px-6 py-3 font-body font-medium text-red-500 transition hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    {cancellingOrder ? "Cancelling..." : "Cancel Order"}
+  </button>
+)}
+
 
             {order.payment_method === "online" && (
               <div className="rounded-[30px] bg-white p-6 shadow-lg">

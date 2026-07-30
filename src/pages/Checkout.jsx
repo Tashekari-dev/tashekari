@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { motion } from "framer-motion";
 
 import Navbar from "../components/layout/Navbar";
@@ -37,10 +41,12 @@ function loadRazorpayScript() {
   });
 }
 export default function Checkout() {
-  const [couponCode, setCouponCode] = useState("");
-const [couponApplied, setCouponApplied] = useState(false);
+const [couponCode, setCouponCode] = useState("");
+const [appliedCoupon, setAppliedCoupon] = useState(null);
 const [couponMessage, setCouponMessage] = useState("");
+const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 const { cartItems, clearCart } = useCart();
 const { user, authLoading } = useAuth();
 
@@ -85,10 +91,61 @@ useEffect(() => {
       total + getPriceNumber(item.price) * item.quantity,
     0
   );
+  useEffect(() => {
+  const transferredCoupon =
+    location.state?.couponCode?.trim();
+
+  if (!transferredCoupon || subtotal <= 0) {
+    return;
+  }
+
+  setCouponCode(transferredCoupon);
+
+  async function applyTransferredCoupon() {
+    try {
+      setIsCheckingCoupon(true);
+
+      const { data, error } = await supabase.rpc(
+        "validate_coupon",
+        {
+          p_code: transferredCoupon,
+          p_cart_subtotal: subtotal,
+        }
+      );
+
+      if (error) throw error;
+
+      if (!data?.valid) {
+        setAppliedCoupon(null);
+        setCouponMessage(
+          data?.message || "Coupon is no longer valid."
+        );
+        return;
+      }
+
+      setAppliedCoupon(data);
+      setCouponMessage(
+        data.message || "Coupon applied successfully."
+      );
+    } catch (error) {
+      console.error("Transferred coupon error:", error);
+      setAppliedCoupon(null);
+      setCouponMessage("Unable to apply transferred coupon.");
+    } finally {
+      setIsCheckingCoupon(false);
+    }
+  }
+
+  applyTransferredCoupon();
+}, [location.state, subtotal]);
 
   const shipping = subtotal >= 1999 || subtotal === 0 ? 0 : 99;
-  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-const finalTotal = subtotal + shipping - discount;
+ const discount = Number(appliedCoupon?.discount_amount || 0);
+
+const finalTotal = Math.max(
+  subtotal + shipping - discount,
+  0
+);
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -97,23 +154,66 @@ const finalTotal = subtotal + shipping - discount;
       [name]: value,
     }));
   }
-  function handleApplyCoupon() {
+ async function handleApplyCoupon() {
   const code = couponCode.trim().toUpperCase();
 
   if (!code) {
-    setCouponApplied(false);
+    setAppliedCoupon(null);
     setCouponMessage("Please enter a coupon code.");
     return;
   }
 
-  if (code === "TASHEKARI10") {
-    setCouponApplied(true);
-    setCouponMessage("Coupon applied! You saved 10%.");
+  if (subtotal <= 0) {
+    setAppliedCoupon(null);
+    setCouponMessage("Your cart is empty.");
     return;
   }
 
-  setCouponApplied(false);
-  setCouponMessage("Invalid coupon code.");
+  try {
+    setIsCheckingCoupon(true);
+    setCouponMessage("");
+
+    const { data, error: couponError } = await supabase.rpc(
+      "validate_coupon",
+      {
+        p_code: code,
+        p_cart_subtotal: subtotal,
+      }
+    );
+
+    if (couponError) {
+      throw couponError;
+    }
+
+    if (!data?.valid) {
+      setAppliedCoupon(null);
+      setCouponMessage(
+        data?.message || "Invalid coupon code."
+      );
+      return;
+    }
+
+    setCouponCode(data.code || code);
+    setAppliedCoupon(data);
+    setCouponMessage(
+      data.message || "Coupon applied successfully."
+    );
+  } catch (couponError) {
+    console.error("Coupon validation error:", couponError);
+
+    setAppliedCoupon(null);
+    setCouponMessage(
+      couponError?.message || "Unable to validate coupon."
+    );
+  } finally {
+    setIsCheckingCoupon(false);
+  }
+}
+
+function handleRemoveCoupon() {
+  setCouponCode("");
+  setAppliedCoupon(null);
+  setCouponMessage("");
 }
 
  async function handleSubmit(event) {
@@ -172,6 +272,11 @@ if (paymentMethod === "cod") {
             pincode: formData.pincode,
             items: cartItems,
             amount: finalTotal,
+            subtotal,
+shipping,
+couponCode: appliedCoupon?.code || null,
+couponId: appliedCoupon?.coupon_id || null,
+discountAmount: discount,
           },
         },
       });
@@ -289,6 +394,11 @@ handler: async function (response) {
     pincode: formData.pincode,
     items: cartItems,
     amount: finalTotal,
+    subtotal,
+shipping,
+couponCode: appliedCoupon?.code || null,
+couponId: appliedCoupon?.coupon_id || null,
+discountAmount: discount,
   },
 },
       });
@@ -657,7 +767,7 @@ handler: async function (response) {
               <h2 className="font-heading text-4xl font-semibold text-primary">
                 Order Summary
               </h2>
-              <div className="rounded-2xl bg-background p-4">
+            <div className="rounded-2xl bg-background p-4">
   <p className="font-body text-sm font-medium text-primary">
     Coupon Code
   </p>
@@ -666,24 +776,45 @@ handler: async function (response) {
     <input
       type="text"
       value={couponCode}
-      onChange={(event) => setCouponCode(event.target.value)}
+      onChange={(event) => {
+        setCouponCode(event.target.value.toUpperCase());
+
+        if (appliedCoupon) {
+          setAppliedCoupon(null);
+          setCouponMessage("");
+        }
+      }}
       placeholder="Enter coupon"
-      className="min-w-0 flex-1 rounded-full border border-primary/15 bg-white px-4 py-3 font-body text-sm text-primary outline-none focus:border-secondary"
+      disabled={isCheckingCoupon}
+      className="min-w-0 flex-1 rounded-full border border-primary/15 bg-white px-4 py-3 font-body text-sm uppercase text-primary outline-none focus:border-secondary disabled:opacity-60"
     />
 
-    <button
-      type="button"
-      onClick={handleApplyCoupon}
-      className="rounded-full bg-primary px-5 py-3 font-body text-sm font-medium text-white transition hover:bg-[#4E3829]"
-    >
-      Apply
-    </button>
+    {appliedCoupon ? (
+      <button
+        type="button"
+        onClick={handleRemoveCoupon}
+        className="rounded-full border border-red-500 px-5 py-3 font-body text-sm font-medium text-red-500 transition hover:bg-red-500 hover:text-white"
+      >
+        Remove
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={handleApplyCoupon}
+        disabled={isCheckingCoupon}
+        className="rounded-full bg-primary px-5 py-3 font-body text-sm font-medium text-white transition hover:bg-[#4E3829] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isCheckingCoupon ? "Checking..." : "Apply"}
+      </button>
+    )}
   </div>
 
   {couponMessage && (
     <p
       className={`mt-3 font-body text-xs ${
-        couponApplied ? "text-green-600" : "text-red-500"
+        appliedCoupon
+          ? "text-green-600"
+          : "text-red-500"
       }`}
     >
       {couponMessage}
@@ -691,10 +822,9 @@ handler: async function (response) {
   )}
 
   <p className="mt-2 font-body text-xs text-[#817267]">
-    Try code: TASHEKARI10
+    Try code: WELCOME10
   </p>
 </div>
-
               {cartItems.length === 0 ? (
                 <div className="mt-8 rounded-2xl bg-background p-6 text-center">
                   <p className="font-body text-[#75695F]">
@@ -755,9 +885,9 @@ handler: async function (response) {
     </span>
   </div>
 
-  {couponApplied && (
+ {appliedCoupon && (
     <div className="flex justify-between text-green-600">
-      <span>Discount</span>
+      <span>Coupon ({appliedCoupon.code})</span>
       <span>-₹{discount.toLocaleString()}</span>
     </div>
   )}

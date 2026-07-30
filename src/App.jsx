@@ -32,6 +32,7 @@ import Orders from "./pages/admin/Orders";
 import CustomOrders from "./pages/admin/CustomOrders";
 import Products from "./pages/admin/Products";
 import AdminCollections from "./pages/admin/Collections";
+import Coupons from "./pages/admin/Coupons";
 import Settings from "./pages/admin/Settings";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
@@ -219,6 +220,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/admin/coupons"
+  element={
+    <ProtectedRoute>
+      <Coupons />
+    </ProtectedRoute>
+  }
+/>
 
         <Route
           path="/admin/settings"

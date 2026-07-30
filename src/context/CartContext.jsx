@@ -67,6 +67,7 @@ export function CartProvider({ children }) {
         ...prevItems,
         {
           ...product,
+          price: getNumericPrice(product.price),
           quantity: 1,
         },
       ];
@@ -76,6 +77,56 @@ export function CartProvider({ children }) {
     toast.success(
       `${product.name || "Product"} added to cart.`
     );
+  }
+
+  function addMultipleToCart(products) {
+    if (!Array.isArray(products) || products.length === 0) {
+      toast.error("No products found to add.");
+      return;
+    }
+
+    const validProducts = products.filter(
+      (product) => product?.id
+    );
+
+    if (validProducts.length === 0) {
+      toast.error("No valid products found.");
+      return;
+    }
+
+    setCartItems((prevItems) => {
+      const updatedCart = [...prevItems];
+
+      validProducts.forEach((product) => {
+        const quantity = Math.max(
+          1,
+          Number(product.quantity) || 1
+        );
+
+        const existingIndex = updatedCart.findIndex(
+          (item) => item.id === product.id
+        );
+
+        if (existingIndex >= 0) {
+          updatedCart[existingIndex] = {
+            ...updatedCart[existingIndex],
+            quantity:
+              updatedCart[existingIndex].quantity + quantity,
+          };
+        } else {
+          updatedCart.push({
+            ...product,
+            price: getNumericPrice(product.price),
+            quantity,
+          });
+        }
+      });
+
+      return updatedCart;
+    });
+
+    toast.dismiss();
+    toast.success("Order products added to cart.");
   }
 
   function increaseQuantity(id) {
@@ -91,55 +142,56 @@ export function CartProvider({ children }) {
     );
   }
 
- function decreaseQuantity(id) {
-  const selectedItem = cartItems.find(
-    (item) => item.id === id
-  );
+  function decreaseQuantity(id) {
+    const selectedItem = cartItems.find(
+      (item) => item.id === id
+    );
 
-  if (!selectedItem) {
-    toast.error("Product not found in cart.");
-    return;
+    if (!selectedItem) {
+      toast.error("Product not found in cart.");
+      return;
+    }
+
+    setCartItems((prevItems) =>
+      prevItems
+        .map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                quantity: item.quantity - 1,
+              }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+
+    if (selectedItem.quantity === 1) {
+      toast.dismiss();
+      toast.success(
+        `${selectedItem.name || "Product"} removed from cart.`
+      );
+    }
   }
 
-  setCartItems((prevItems) =>
-    prevItems
-      .map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: item.quantity - 1,
-            }
-          : item
-      )
-      .filter((item) => item.quantity > 0)
-  );
+  function removeFromCart(id) {
+    const selectedItem = cartItems.find(
+      (item) => item.id === id
+    );
 
-  if (selectedItem.quantity === 1) {
+    if (!selectedItem) {
+      toast.error("Product not found in cart.");
+      return;
+    }
+
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.id !== id)
+    );
+
     toast.dismiss();
     toast.success(
       `${selectedItem.name || "Product"} removed from cart.`
     );
   }
-}
-
-  function removeFromCart(id) {
-  const selectedItem = cartItems.find(
-    (item) => item.id === id
-  );
-
-  if (!selectedItem) {
-    toast.error("Product not found in cart.");
-    return;
-  }
-
-  setCartItems((prevItems) =>
-    prevItems.filter((item) => item.id !== id)
-  );
-  toast.dismiss();
-  toast.success(
-    `${selectedItem.name || "Product"} removed from cart.`
-  );
-}
 
   function clearCart() {
     if (cartItems.length === 0) {
@@ -189,6 +241,7 @@ export function CartProvider({ children }) {
         deliveryCharge,
         cartTotal,
         addToCart,
+        addMultipleToCart,
         increaseQuantity,
         decreaseQuantity,
         removeFromCart,

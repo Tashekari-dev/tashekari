@@ -7,6 +7,7 @@ import {
   FaLayerGroup,
   FaSignOutAlt,
   FaShoppingBag,
+  FaTags,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 
@@ -24,7 +25,9 @@ export default function AdminLayout({ children }) {
       toast.dismiss();
       toast.success("Admin logged out successfully.");
 
-      navigate("/admin/login", { replace: true });
+      navigate("/admin/login", {
+        replace: true,
+      });
     } catch (error) {
       console.error("Admin logout error:", error);
 
@@ -61,6 +64,11 @@ export default function AdminLayout({ children }) {
       icon: <FaLayerGroup />,
     },
     {
+      label: "Coupons",
+      path: "/admin/coupons",
+      icon: <FaTags />,
+    },
+    {
       label: "Settings",
       path: "/admin/settings",
       icon: <FaCog />,
@@ -94,7 +102,10 @@ export default function AdminLayout({ children }) {
                 }`
               }
             >
-              <span className="text-base">{item.icon}</span>
+              <span className="text-base">
+                {item.icon}
+              </span>
+
               <span>{item.label}</span>
             </NavLink>
           ))}
