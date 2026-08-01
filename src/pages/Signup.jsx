@@ -122,7 +122,7 @@ export default function Signup() {
               </Link>
 
               <p className="mt-5 text-center font-body text-sm text-[#75695F]">
-                Email confirm karne ke baad login karein.
+                Please verify your email before signing in.
               </p>
             </div>
           ) : (

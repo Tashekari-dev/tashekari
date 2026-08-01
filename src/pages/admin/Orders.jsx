@@ -16,20 +16,42 @@ export default function Orders() {
 const [trackingNumber, setTrackingNumber] = useState("");
 const [savingTracking, setSavingTracking] = useState(false);
 
-  async function updateOrderStatus(status) {
+ async function updateOrderStatus(status) {
   if (!selectedOrder) return;
+
+  const previousStatus =
+    selectedOrder.status || "Pending";
+
+  if (status === previousStatus) {
+    return;
+  }
+
+  if (
+    status === "Shipped" &&
+    (!selectedOrder.courier_name?.trim() ||
+      !selectedOrder.tracking_number?.trim())
+  ) {
+    toast.dismiss();
+    toast.error(
+      "Shipped karne se pehle courier partner aur tracking number save karo."
+    );
+    return;
+  }
 
   try {
     setUpdatingStatus(true);
+    toast.dismiss();
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from("orders")
       .update({
         status,
       })
       .eq("id", selectedOrder.id);
 
-    if (error) throw error;
+    if (updateError) {
+      throw updateError;
+    }
 
     const updatedOrder = {
       ...selectedOrder,
@@ -38,21 +60,73 @@ const [savingTracking, setSavingTracking] = useState(false);
 
     setSelectedOrder(updatedOrder);
 
-    setOrders((previous) =>
-      previous.map((order) =>
+    setOrders((previousOrders) =>
+      previousOrders.map((order) =>
         order.id === selectedOrder.id
           ? updatedOrder
           : order
       )
     );
 
-    toast.dismiss();
-toast.success("Order status updated.");
+    if (
+      ["Packed", "Shipped", "Delivered", "Cancelled"].includes(
+        status
+      )
+    ) {
+      const { data: emailData, error: emailError } =
+        await supabase.functions.invoke(
+          "send-order-status-email",
+          {
+            body: {
+              orderId: selectedOrder.id,
+              status,
+            },
+          }
+        );
 
-  } catch (error) {
-    console.error(error);
-   toast.dismiss();
-toast.error(error.message);
+      if (emailError) {
+        console.error(
+          "Order status email invoke error:",
+          emailError
+        );
+
+        toast.error(
+          `Status ${status} ho gaya, lekin customer email nahi ja saka.`
+        );
+        return;
+      }
+
+      if (!emailData?.success) {
+        console.error(
+          "Order status email response:",
+          emailData
+        );
+
+        toast.error(
+          emailData?.message ||
+            `Status ${status} ho gaya, lekin customer email nahi ja saka.`
+        );
+        return;
+      }
+
+      toast.success(
+        `Order ${status} ho gaya aur customer email send ho gaya.`
+      );
+      return;
+    }
+
+    toast.success("Order status updated.");
+  } catch (statusError) {
+    console.error(
+      "Order status update error:",
+      statusError
+    );
+
+    toast.dismiss();
+    toast.error(
+      statusError?.message ||
+        "Order status update nahi ho saka."
+    );
   } finally {
     setUpdatingStatus(false);
   }
