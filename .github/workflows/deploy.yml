@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout Repository
@@ -39,3 +40,5 @@ jobs:
           local-dir: ./dist/
           server-dir: /
           state-name: .ftp-deploy-public-html-state.json
+          timeout: 120000
+          log-level: verbose
