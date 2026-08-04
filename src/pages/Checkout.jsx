@@ -11,6 +11,7 @@ import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import { saveCustomerProfile } from "../services/profileService";
 
 function loadRazorpayScript() {
   return new Promise((resolve) => {
@@ -65,21 +66,111 @@ const { user, authLoading } = useAuth();
   orderNotes: "",
 });
 useEffect(() => {
-  if (authLoading || !user) {
-    return;
+  if (authLoading || !user) return;
+
+  async function loadCustomerProfile() {
+    const savedFullName =
+      user.user_metadata?.full_name?.trim() ||
+      user.user_metadata?.name?.trim() ||
+      user.email?.split("@")[0] ||
+      "";
+
+   const {
+  data,
+  error: profileError,
+} = await supabase
+  .from("customer_profiles")
+  .select(
+    `
+      full_name,
+      phone,
+      address,
+      city,
+      state,
+      pincode
+    `
+  )
+  .eq("id", user.id)
+  .maybeSingle();
+
+if (profileError) {
+  console.error(
+    "Checkout profile load error:",
+    profileError
+  );
+}
+
+    setFormData((current) => ({
+      ...current,
+
+      fullName:
+        data?.full_name ||
+        current.fullName ||
+        savedFullName,
+
+      phone:
+        data?.phone ||
+        current.phone,
+
+      email:
+        user.email ||
+        current.email,
+
+      address:
+        data?.address ||
+        current.address,
+
+      city:
+        data?.city ||
+        current.city,
+
+     state: (() => {
+  const savedState = String(
+    data?.state || current.state || ""
+  ).trim();
+
+  if (!savedState) {
+    return "";
   }
 
-  const savedFullName =
-    user.user_metadata?.full_name?.trim() ||
-    user.user_metadata?.name?.trim() ||
-    user.email?.split("@")[0] ||
-    "";
+  const stateOptions = {
+    "andhra pradesh": "Andhra Pradesh",
+    assam: "Assam",
+    bihar: "Bihar",
+    chhattisgarh: "Chhattisgarh",
+    delhi: "Delhi",
+    goa: "Goa",
+    gujarat: "Gujarat",
+    haryana: "Haryana",
+    "himachal pradesh": "Himachal Pradesh",
+    jharkhand: "Jharkhand",
+    karnataka: "Karnataka",
+    kerala: "Kerala",
+    "madhya pradesh": "Madhya Pradesh",
+    maharashtra: "Maharashtra",
+    odisha: "Odisha",
+    punjab: "Punjab",
+    rajasthan: "Rajasthan",
+    "tamil nadu": "Tamil Nadu",
+    telangana: "Telangana",
+    "uttar pradesh": "Uttar Pradesh",
+    uttarakhand: "Uttarakhand",
+    "west bengal": "West Bengal",
+  };
 
-  setFormData((current) => ({
-    ...current,
-    fullName: current.fullName || savedFullName,
-    email: user.email || current.email,
-  }));
+  return (
+    stateOptions[savedState.toLowerCase()] ||
+    savedState
+  );
+})(),
+
+      pincode:
+        data?.pincode ||
+        current.pincode,
+    }));
+  }
+
+  loadCustomerProfile();
 }, [authLoading, user]);
 
   function getPriceNumber(price) {
@@ -215,7 +306,27 @@ function handleRemoveCoupon() {
   setAppliedCoupon(null);
   setCouponMessage("");
 }
+async function saveCheckoutDetailsToProfile() {
+  if (!user?.id) {
+    return;
+  }
 
+  try {
+    await saveCustomerProfile(user.id, {
+      full_name: formData.fullName.trim(),
+      phone: formData.phone.trim(),
+      address: formData.address.trim(),
+      city: formData.city.trim(),
+      state: formData.state.trim(),
+      pincode: formData.pincode.trim(),
+    });
+  } catch (profileSaveError) {
+    console.error(
+      "Checkout profile save error:",
+      profileSaveError
+    );
+  }
+}
  async function handleSubmit(event) {
   event.preventDefault();
   console.log("Cart Items:", cartItems);
@@ -287,13 +398,15 @@ discountAmount: discount,
       );
     }
 
-    if (!data?.success) {
-      throw new Error(
-        data?.message || "Unable to place COD order."
-      );
-    }
+   if (!data?.success) {
+  throw new Error(
+    data?.message || "Unable to place COD order."
+  );
+}
 
-    clearCart();
+await saveCheckoutDetailsToProfile();
+
+clearCart();
 
     navigate("/order-success", {
       state: {
@@ -410,14 +523,16 @@ discountAmount: discount,
       );
     }
 
-    if (!verificationData?.success) {
-      throw new Error(
-        verificationData?.message ||
-          "Payment verification failed."
-      );
-    }
+   if (!verificationData?.success) {
+  throw new Error(
+    verificationData?.message ||
+      "Payment verification failed."
+  );
+}
 
-    clearCart();
+await saveCheckoutDetailsToProfile();
+
+clearCart();
 
     navigate("/order-success", {
       state: {

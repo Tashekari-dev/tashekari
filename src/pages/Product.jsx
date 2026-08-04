@@ -93,6 +93,8 @@ export default function Product() {
 
   const [activeImage, setActiveImage] = useState("");
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+  const [reviews, setReviews] = useState([]);
+const [loadingReviews, setLoadingReviews] = useState(true);
 
   const galleryImages = useMemo(
     () => normalizeGalleryImages(product),
@@ -121,6 +123,43 @@ export default function Product() {
     () => galleryImages.findIndex((image) => image === activeImage),
     [galleryImages, activeImage]
   );
+  const reviewCount = reviews.length;
+
+const averageRating = useMemo(() => {
+  if (reviewCount === 0) {
+    return 0;
+  }
+
+  const totalRating = reviews.reduce(
+    (total, review) =>
+      total + Number(review.rating || 0),
+    0
+  );
+
+  return totalRating / reviewCount;
+}, [reviews, reviewCount]);
+
+function renderRatingStars(rating) {
+  const roundedRating = Math.round(
+    Number(rating || 0)
+  );
+
+  return Array.from(
+    { length: 5 },
+    (_, index) => (
+      <span
+        key={index}
+        className={
+          index < roundedRating
+            ? "text-yellow-500"
+            : "text-gray-300"
+        }
+      >
+        ★
+      </span>
+    )
+  );
+}
 
   useEffect(() => {
     async function fetchProductData() {
@@ -174,6 +213,55 @@ export default function Product() {
 
     fetchProductData();
   }, [id]);
+  useEffect(() => {
+  async function fetchApprovedReviews() {
+    if (!id) {
+      setReviews([]);
+      setLoadingReviews(false);
+      return;
+    }
+
+    try {
+      setLoadingReviews(true);
+
+      const { data, error: reviewsError } =
+        await supabase
+          .from("product_reviews")
+          .select(
+            `
+              id,
+              product_id,
+              customer_name,
+              rating,
+              review_text,
+              created_at
+            `
+          )
+          .eq("product_id", String(id))
+          .eq("approved", true)
+          .order("created_at", {
+            ascending: false,
+          });
+
+      if (reviewsError) {
+        throw reviewsError;
+      }
+
+      setReviews(data || []);
+    } catch (reviewsError) {
+      console.error(
+        "Approved reviews fetch error:",
+        reviewsError
+      );
+
+      setReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
+  }
+
+  fetchApprovedReviews();
+}, [id]);
 
   useEffect(() => {
     if (!product) {
@@ -536,12 +624,28 @@ ${url}`;
                   </span>
                 </div>
 
-                <div className="mt-5 text-secondary">
-                  ★★★★★
-                  <span className="ml-3 font-body text-sm text-[#817267]">
-                    Handmade quality
-                  </span>
-                </div>
+               <div className="mt-5 flex flex-wrap items-center gap-3">
+  <div
+    className="flex text-xl"
+    aria-label={`${averageRating.toFixed(
+      1
+    )} out of 5 stars`}
+  >
+    {renderRatingStars(averageRating)}
+  </div>
+
+  <span className="font-body text-sm text-[#817267]">
+    {reviewCount > 0
+      ? `${averageRating.toFixed(
+          1
+        )} (${reviewCount} ${
+          reviewCount === 1
+            ? "review"
+            : "reviews"
+        })`
+      : "No reviews yet"}
+  </span>
+</div>
 
                 <p className="mt-8 font-body text-base leading-8 text-[#6F6258]">
                   {product.description ||
@@ -773,52 +877,102 @@ ${url}`;
           </div>
         </section>
 
-        <section className="bg-white py-20">
-          <div className="mx-auto max-w-6xl px-6 lg:px-10">
-            <p className="text-center font-body text-xs uppercase tracking-[0.35em] text-secondary">
-              Customer Reviews
+       <section className="bg-white py-20">
+  <div className="mx-auto max-w-6xl px-6 lg:px-10">
+    <p className="text-center font-body text-xs uppercase tracking-[0.35em] text-secondary">
+      Customer Reviews
+    </p>
+
+    <h2 className="mt-4 text-center font-heading text-5xl font-semibold text-primary">
+      Loved by Customers
+    </h2>
+
+    {reviewCount > 0 && (
+      <div className="mx-auto mt-8 flex w-fit flex-wrap items-center justify-center gap-4 rounded-full bg-background px-6 py-3">
+        <div className="flex text-xl">
+          {renderRatingStars(averageRating)}
+        </div>
+
+        <p className="font-body text-sm text-[#6F6258]">
+          <span className="font-semibold text-primary">
+            {averageRating.toFixed(1)}
+          </span>{" "}
+          from {reviewCount}{" "}
+          {reviewCount === 1
+            ? "review"
+            : "reviews"}
+        </p>
+      </div>
+    )}
+
+    {loadingReviews ? (
+      <div className="mt-14 text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+
+        <p className="mt-4 font-body text-[#817267]">
+          Loading reviews...
+        </p>
+      </div>
+    ) : reviews.length === 0 ? (
+      <div className="mx-auto mt-14 max-w-2xl rounded-[30px] bg-background px-6 py-12 text-center shadow-sm">
+        <h3 className="font-heading text-3xl font-semibold text-primary">
+          No Reviews Yet
+        </h3>
+
+        <p className="mt-3 font-body leading-7 text-[#6F6258]">
+          Be the first customer to review this
+          handmade product after delivery.
+        </p>
+      </div>
+    ) : (
+      <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {reviews.map((review) => (
+          <article
+            key={review.id}
+            className="flex h-full flex-col rounded-[30px] bg-background p-8 shadow-lg"
+          >
+            <div
+              className="flex text-2xl"
+              aria-label={`${review.rating} out of 5 stars`}
+            >
+              {renderRatingStars(review.rating)}
+            </div>
+
+            <p className="mt-5 flex-1 font-body leading-8 text-[#6F6258]">
+              “{review.review_text}”
             </p>
 
-            <h2 className="mt-4 text-center font-heading text-5xl font-semibold text-primary">
-              Loved by Customers
-            </h2>
+            <div className="mt-7 border-t border-primary/10 pt-5">
+              <h4 className="font-body font-semibold text-primary">
+                {review.customer_name ||
+                  "Tashekari Customer"}
+              </h4>
 
-            <div className="mt-14 grid gap-8 md:grid-cols-3">
-              {[
-                {
-                  name: "Priya Sharma",
-                  review:
-                    "Amazing craftsmanship. The quality exceeded my expectations.",
-                },
-                {
-                  name: "Aditi Mehra",
-                  review:
-                    "Beautiful handmade product. Packaging was also premium.",
-                },
-                {
-                  name: "Neha Kapoor",
-                  review:
-                    "Definitely buying again. Perfect gifting option.",
-                },
-              ].map((review) => (
-                <div
-                  key={review.name}
-                  className="rounded-[30px] bg-background p-8 shadow-lg"
-                >
-                  <div className="text-2xl text-yellow-500">★★★★★</div>
+              <p className="mt-1 font-body text-xs text-[#817267]">
+                Verified Purchase
+              </p>
 
-                  <p className="mt-5 leading-8 text-[#6F6258]">
-                    {review.review}
-                  </p>
-
-                  <h4 className="mt-6 font-semibold text-primary">
-                    {review.name}
-                  </h4>
-                </div>
-              ))}
+              <p className="mt-2 font-body text-xs text-[#918277]">
+                {review.created_at
+                  ? new Date(
+                      review.created_at
+                    ).toLocaleDateString(
+                      "en-IN",
+                      {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      }
+                    )
+                  : ""}
+              </p>
             </div>
-          </div>
-        </section>
+          </article>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
         {recentProducts.length > 0 && (
           <section className="bg-background py-20">

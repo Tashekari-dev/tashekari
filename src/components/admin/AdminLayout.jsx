@@ -8,6 +8,7 @@ import {
   FaSignOutAlt,
   FaShoppingBag,
   FaTags,
+  FaStar,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 
@@ -68,6 +69,11 @@ export default function AdminLayout({ children }) {
       path: "/admin/coupons",
       icon: <FaTags />,
     },
+    {
+  label: "Reviews",
+  path: "/admin/reviews",
+  icon: <FaStar />,
+},
     {
       label: "Settings",
       path: "/admin/settings",

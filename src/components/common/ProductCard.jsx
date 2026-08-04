@@ -1,7 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link } from "react-router-dom";
-import { FaCheck, FaHeart, FaRegHeart } from "react-icons/fa";
+import {
+  FaCheck,
+  FaHeart,
+  FaRegHeart,
+} from "react-icons/fa";
 
+import { supabase } from "../../lib/supabase";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 
@@ -14,22 +24,35 @@ export default function ProductCard({
   bestseller = false,
 }) {
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { toggleWishlist, isInWishlist } =
+    useWishlist();
 
   const [added, setAdded] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+  const [showToast, setShowToast] =
+    useState(false);
+  const [reviews, setReviews] = useState([]);
 
   const toastTimer = useRef(null);
   const buttonTimer = useRef(null);
 
-  const product = {
-    id,
-    image,
-    name,
-    price,
-    category,
-    bestseller,
-  };
+  const product = useMemo(
+    () => ({
+      id,
+      image,
+      name,
+      price,
+      category,
+      bestseller,
+    }),
+    [
+      id,
+      image,
+      name,
+      price,
+      category,
+      bestseller,
+    ]
+  );
 
   const liked = isInWishlist(id);
 
@@ -39,6 +62,54 @@ export default function ProductCard({
       clearTimeout(buttonTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    async function loadReviews() {
+      if (!id) {
+        setReviews([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("product_reviews")
+          .select("rating")
+          .eq("product_id", String(id))
+          .eq("approved", true);
+
+        if (error) {
+          throw error;
+        }
+
+        setReviews(data || []);
+      } catch (error) {
+        console.error(
+          "Product card reviews error:",
+          error
+        );
+
+        setReviews([]);
+      }
+    }
+
+    loadReviews();
+  }, [id]);
+
+  const reviewCount = reviews.length;
+
+  const averageRating = useMemo(() => {
+    if (reviewCount === 0) {
+      return 0;
+    }
+
+    const totalRating = reviews.reduce(
+      (sum, review) =>
+        sum + Number(review.rating || 0),
+      0
+    );
+
+    return totalRating / reviewCount;
+  }, [reviews, reviewCount]);
 
   function handleWishlist(event) {
     event.preventDefault();
@@ -89,9 +160,15 @@ export default function ProductCard({
             className="absolute right-5 top-5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/90 shadow-lg backdrop-blur-md transition duration-300 hover:scale-110"
           >
             {liked ? (
-              <FaHeart className="text-red-500" size={18} />
+              <FaHeart
+                className="text-red-500"
+                size={18}
+              />
             ) : (
-              <FaRegHeart className="text-primary" size={18} />
+              <FaRegHeart
+                className="text-primary"
+                size={18}
+              />
             )}
           </button>
 
@@ -143,10 +220,51 @@ export default function ProductCard({
             </h3>
           </Link>
 
-          <div className="mt-5 flex items-center justify-between">
-            <p className="text-xl font-semibold text-primary">{price}</p>
+          <div className="mt-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xl font-semibold text-primary">
+                {price}
+              </p>
 
-            <span className="text-sm text-[#8A7B70]">Handmade</span>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <div
+                  className="flex text-sm"
+                  aria-label={`${averageRating.toFixed(
+                    1
+                  )} out of 5 stars`}
+                >
+                  {[1, 2, 3, 4, 5].map(
+                    (star) => (
+                      <span
+                        key={star}
+                        className={
+                          star <=
+                          Math.round(
+                            averageRating
+                          )
+                            ? "text-yellow-500"
+                            : "text-gray-300"
+                        }
+                      >
+                        ★
+                      </span>
+                    )
+                  )}
+                </div>
+
+                <span className="font-body text-xs text-[#8A7B70]">
+                  {reviewCount > 0
+                    ? `${averageRating.toFixed(
+                        1
+                      )} (${reviewCount})`
+                    : "No reviews"}
+                </span>
+              </div>
+            </div>
+
+            <span className="text-sm text-[#8A7B70]">
+              Handmade
+            </span>
           </div>
         </div>
       </div>
@@ -169,7 +287,9 @@ export default function ProductCard({
 
               <Link
                 to="/cart"
-                onClick={() => setShowToast(false)}
+                onClick={() =>
+                  setShowToast(false)
+                }
                 className="mt-3 inline-block font-body text-sm font-semibold text-primary underline underline-offset-4 transition hover:text-secondary"
               >
                 View Cart →
@@ -178,7 +298,9 @@ export default function ProductCard({
 
             <button
               type="button"
-              onClick={() => setShowToast(false)}
+              onClick={() =>
+                setShowToast(false)
+              }
               aria-label="Close notification"
               className="text-xl text-[#8A7B70] transition hover:text-primary"
             >

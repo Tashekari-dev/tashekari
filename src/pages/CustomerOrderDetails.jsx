@@ -2,7 +2,7 @@ import toast from "react-hot-toast";
 import { useCart } from "../context/CartContext";
 import InvoiceButton from "../components/common/InvoiceButton";
 import { supabase } from "../lib/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -30,6 +30,11 @@ export default function CustomerOrderDetails() {
   const [loadingOrder, setLoadingOrder] = useState(true);
   const [error, setError] = useState("");
   const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [reviewingItem, setReviewingItem] = useState(null);
+const [reviewRating, setReviewRating] = useState(5);
+const [reviewText, setReviewText] = useState("");
+const [submittingReview, setSubmittingReview] = useState(false);
+const [submittedProductIds, setSubmittedProductIds] = useState([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -104,6 +109,38 @@ export default function CustomerOrderDetails() {
 
     fetchOrderDetails();
   }, [user, id]);
+  useEffect(() => {
+  async function fetchSubmittedReviews() {
+    if (!user?.id || !order?.id) {
+      return;
+    }
+
+    try {
+      const { data, error: reviewsError } = await supabase
+        .from("product_reviews")
+        .select("product_id")
+        .eq("order_id", order.id)
+        .eq("user_id", user.id);
+
+      if (reviewsError) {
+        throw reviewsError;
+      }
+
+      setSubmittedProductIds(
+        (data || []).map((review) =>
+          String(review.product_id)
+        )
+      );
+    } catch (reviewsError) {
+      console.error(
+        "Submitted reviews load error:",
+        reviewsError
+      );
+    }
+  }
+
+  fetchSubmittedReviews();
+}, [user, order?.id]);
 
   if (authLoading || loadingOrder) {
     return (
@@ -199,6 +236,101 @@ async function handleCancelOrder() {
     );
   } finally {
     setCancellingOrder(false);
+  }
+}
+function openReviewForm(item) {
+  setReviewingItem(item);
+  setReviewRating(5);
+  setReviewText("");
+}
+
+function closeReviewForm() {
+  if (submittingReview) return;
+
+  setReviewingItem(null);
+  setReviewRating(5);
+  setReviewText("");
+}
+
+async function handleSubmitReview(event) {
+  event.preventDefault();
+
+  if (!reviewingItem?.id) {
+    toast.dismiss();
+    toast.error("Product information is missing.");
+    return;
+  }
+
+  const cleanReview = reviewText.trim();
+
+  if (reviewRating < 1 || reviewRating > 5) {
+    toast.dismiss();
+    toast.error("Please select a rating.");
+    return;
+  }
+
+  if (cleanReview.length < 5) {
+    toast.dismiss();
+    toast.error(
+      "Please write at least 5 characters."
+    );
+    return;
+  }
+
+  try {
+    setSubmittingReview(true);
+    toast.dismiss();
+
+    const { data, error: reviewError } =
+      await supabase.rpc(
+        "submit_product_review",
+        {
+          p_order_id: order.id,
+          p_product_id: String(
+            reviewingItem.id
+          ),
+          p_rating: reviewRating,
+          p_review_text: cleanReview,
+        }
+      );
+
+    if (reviewError) {
+      throw reviewError;
+    }
+
+    if (!data?.success) {
+      throw new Error(
+        data?.message ||
+          "Review could not be submitted."
+      );
+    }
+
+    setSubmittedProductIds((currentIds) => [
+      ...new Set([
+        ...currentIds,
+        String(reviewingItem.id),
+      ]),
+    ]);
+
+    closeReviewForm();
+
+    toast.success(
+      data.message ||
+        "Review submitted successfully."
+    );
+  } catch (reviewError) {
+    console.error(
+      "Review submission error:",
+      reviewError
+    );
+
+    toast.dismiss();
+    toast.error(
+      reviewError?.message ||
+        "Unable to submit your review."
+    );
+  } finally {
+    setSubmittingReview(false);
   }
 }
 
@@ -344,6 +476,26 @@ async function handleCancelOrder() {
                               itemPrice * quantity
                             ).toLocaleString("en-IN")}
                           </p>
+                          {String(currentStatus).toLowerCase() ===
+  "delivered" && (
+  <div className="mt-4">
+    {submittedProductIds.includes(
+      String(item.id)
+    ) ? (
+      <span className="inline-block rounded-full bg-green-100 px-4 py-2 font-body text-xs font-medium text-green-700">
+        Review Submitted
+      </span>
+    ) : (
+      <button
+        type="button"
+        onClick={() => openReviewForm(item)}
+        className="rounded-full border border-primary px-5 py-2.5 font-body text-sm font-medium text-primary transition hover:bg-primary hover:text-white"
+      >
+        Write a Review
+      </button>
+    )}
+  </div>
+)}
                         </div>
                       </div>
                     );
@@ -553,6 +705,93 @@ async function handleCancelOrder() {
       </main>
 
       <Footer />
+      {reviewingItem && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+    <div className="w-full max-w-lg rounded-[30px] bg-white p-6 shadow-2xl sm:p-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-body text-xs uppercase tracking-[0.25em] text-secondary">
+            Product Review
+          </p>
+
+          <h2 className="mt-3 font-heading text-3xl font-semibold text-primary">
+            {reviewingItem.name ||
+              "Tashekari Product"}
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          onClick={closeReviewForm}
+          disabled={submittingReview}
+          className="text-3xl leading-none text-gray-400 transition hover:text-primary disabled:cursor-not-allowed"
+          aria-label="Close review form"
+        >
+          ×
+        </button>
+      </div>
+
+      <form
+        onSubmit={handleSubmitReview}
+        className="mt-7"
+      >
+        <p className="font-body text-sm font-medium text-primary">
+          Your Rating
+        </p>
+
+        <div className="mt-3 flex gap-2">
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <button
+              key={rating}
+              type="button"
+              onClick={() =>
+                setReviewRating(rating)
+              }
+              className={`text-4xl transition ${
+                rating <= reviewRating
+                  ? "text-yellow-500"
+                  : "text-gray-300"
+              }`}
+              aria-label={`${rating} star rating`}
+            >
+              ★
+            </button>
+          ))}
+        </div>
+
+        <label className="mt-7 block font-body text-sm font-medium text-primary">
+          Your Review
+        </label>
+
+        <textarea
+          value={reviewText}
+          onChange={(event) =>
+            setReviewText(event.target.value)
+          }
+          rows={5}
+          maxLength={1000}
+          placeholder="Share your experience with this handmade product..."
+          className="mt-3 w-full resize-none rounded-2xl border border-primary/15 bg-background px-5 py-4 font-body text-primary outline-none transition focus:border-primary"
+        />
+
+        <div className="mt-2 flex justify-between font-body text-xs text-[#817267]">
+          <span>Minimum 5 characters</span>
+          <span>{reviewText.length}/1000</span>
+        </div>
+
+        <button
+          type="submit"
+          disabled={submittingReview}
+          className="mt-7 w-full rounded-full bg-primary px-6 py-4 font-body font-medium text-white transition hover:bg-[#4E3829] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submittingReview
+            ? "Submitting Review..."
+            : "Submit Review"}
+        </button>
+      </form>
+    </div>
+  </div>
+)}
     </>
   );
 }

@@ -35,6 +35,7 @@ import AdminCollections from "./pages/admin/Collections";
 import Coupons from "./pages/admin/Coupons";
 import Settings from "./pages/admin/Settings";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
+import Reviews from "./pages/admin/Reviews";
 
 import NotFound from "./pages/NotFound";
 
@@ -226,6 +227,15 @@ function App() {
   element={
     <ProtectedRoute>
       <Coupons />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/reviews"
+  element={
+    <ProtectedRoute>
+      <Reviews />
     </ProtectedRoute>
   }
 />
