@@ -5,13 +5,22 @@ import bag14 from "../../assets/products/bag14.jpeg";
 
 export default function About() {
   return (
-    <section id="our-story" className="overflow-hidden bg-background py-28">
+    <section
+      id="our-story"
+      className="overflow-hidden bg-background py-28"
+    >
       <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 md:grid-cols-2 lg:px-10">
         <motion.div
           initial={{ opacity: 0, x: -55 }}
           whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.75, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.25 }}
+          transition={{
+            duration: 0.75,
+            ease: "easeOut",
+          }}
+          viewport={{
+            once: true,
+            amount: 0.25,
+          }}
           className="relative"
         >
           <div className="absolute -left-10 -top-10 h-72 w-72 rounded-full bg-light/80 blur-[120px]" />
@@ -47,8 +56,14 @@ export default function About() {
         <motion.div
           initial={{ opacity: 0, x: 55 }}
           whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.75, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.25 }}
+          transition={{
+            duration: 0.75,
+            ease: "easeOut",
+          }}
+          viewport={{
+            once: true,
+            amount: 0.25,
+          }}
         >
           <p className="font-body text-xs uppercase tracking-[0.38em] text-secondary">
             About Tashekari
@@ -56,7 +71,9 @@ export default function About() {
 
           <h2 className="mt-5 font-heading text-5xl font-semibold leading-tight text-primary md:text-6xl">
             Handmade with
-            <span className="block italic text-secondary">passion and purpose.</span>
+            <span className="block italic text-secondary">
+              passion and purpose.
+            </span>
           </h2>
 
           <p className="mt-8 font-body text-base leading-8 text-[#6F6258]">
@@ -70,26 +87,6 @@ export default function About() {
             craftsmanship, skill development and meaningful opportunities for
             people who want to create, learn and grow.
           </p>
-
-          <div className="mt-10 grid grid-cols-2 gap-5">
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h3 className="font-heading text-4xl font-semibold text-primary">
-                500+
-              </h3>
-              <p className="mt-2 font-body text-sm text-[#817267]">
-                Happy Customers
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h3 className="font-heading text-4xl font-semibold text-primary">
-                150+
-              </h3>
-              <p className="mt-2 font-body text-sm text-[#817267]">
-                Handmade Designs
-              </p>
-            </div>
-          </div>
 
           <Link
             to="/about"

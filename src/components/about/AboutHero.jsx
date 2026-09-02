@@ -60,23 +60,7 @@ export default function AboutHero() {
               </p>
             </div>
 
-            <div>
-              <h2 className="font-heading text-4xl font-semibold text-primary">
-                500+
-              </h2>
-              <p className="mt-1 font-body text-sm text-[#817267]">
-                Happy Customers
-              </p>
-            </div>
-
-            <div>
-              <h2 className="font-heading text-4xl font-semibold text-primary">
-                100%
-              </h2>
-              <p className="mt-1 font-body text-sm text-[#817267]">
-                Handmade
-              </p>
-            </div>
+           
           </div>
         </motion.div>
 

@@ -684,12 +684,14 @@ export default function Products() {
                       onChange={(event) => setCategory(event.target.value)}
                       className="w-full rounded-xl border px-4 py-3"
                     >
-                      <option value="">Select category</option>
-                      <option value="Bags">Bags</option>
-                      <option value="Keychains">Keychains</option>
-                      <option value="Accessories">Accessories</option>
-                      <option value="Bookmarks">Bookmarks</option>
-                      <option value="Home Decor">Home Decor</option>
+                     <option value="">Select category</option>
+<option value="Bags">Bags</option>
+<option value="Keychains">Keychains</option>
+<option value="Accessories">Accessories</option>
+<option value="Bookmarks">Bookmarks</option>
+<option value="Wall Hangings">Wall Hangings</option>
+<option value="Coasters">Coasters</option>
+<option value="Home Decor">Home Decor</option>
                     </select>
                   </div>
 

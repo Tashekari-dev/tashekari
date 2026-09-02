@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FaFilter,
@@ -15,6 +16,7 @@ import { getProducts } from "../services/productService.js";
 import { supabase } from "../lib/supabase";
 
 export default function Shop() {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [collections, setCollections] = useState([]);
   const [productCollections, setProductCollections] = useState([]);
@@ -34,7 +36,13 @@ export default function Shop() {
   useEffect(() => {
     fetchShopData();
   }, []);
+useEffect(() => {
+  const categoryFromUrl = searchParams.get("category");
 
+  if (categoryFromUrl) {
+    setCategory(categoryFromUrl);
+  }
+}, [searchParams]);
   async function fetchShopData() {
     try {
       setLoading(true);
@@ -85,18 +93,29 @@ export default function Shop() {
     return Number(String(price).replace(/[₹,\s]/g, "")) || 0;
   }
 
-  const categories = useMemo(() => {
-    const uniqueCategories = [
-      ...new Set(
-        products
-          .map((product) => product.category)
-          .filter(Boolean)
-      ),
-    ];
+ const categories = useMemo(() => {
+  const defaultCategories = [
+    "Keychains",
+    "Bags",
+    "Accessories",
+    "Bookmarks",
+    "Wall Hangings",
+    "Coasters",
+  ];
 
-    return ["All", ...uniqueCategories];
-  }, [products]);
+  const productCategories = products
+    .map((product) => product.category)
+    .filter(Boolean);
 
+  const uniqueCategories = [
+    ...new Set([
+      ...defaultCategories,
+      ...productCategories,
+    ]),
+  ];
+
+  return ["All", ...uniqueCategories];
+}, [products]);
   const productCollectionMap = useMemo(() => {
     const map = new Map();
 

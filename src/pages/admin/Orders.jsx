@@ -18,14 +18,25 @@ export default function Orders() {
 const [paymentFilter, setPaymentFilter] = useState("All");
 const [fromDate, setFromDate] = useState("");
 const [toDate, setToDate] = useState("");
+const [sortBy, setSortBy] = useState("Newest");
 const [currentPage, setCurrentPage] = useState(1);
 const [ordersPerPage, setOrdersPerPage] = useState(10);
+const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+const [bulkUpdating, setBulkUpdating] = useState(false);
 function resetFilters() {
   setSearchTerm("");
   setStatusFilter("All");
   setPaymentFilter("All");
   setFromDate("");
   setToDate("");
+}
+function resetFilters() {
+  setSearchTerm("");
+  setStatusFilter("All");
+  setPaymentFilter("All");
+  setFromDate("");
+  setToDate("");
+  setSortBy("Newest");
 }
 function filterToday() {
   const today = new Date()
@@ -92,7 +103,7 @@ const [savingTracking, setSavingTracking] = useState(false);
   ) {
     toast.dismiss();
     toast.error(
-      "Shipped karne se pehle courier partner aur tracking number save karo."
+     "Please save courier partner and tracking number before marking the order as shipped."
     );
     return;
   }
@@ -150,7 +161,7 @@ const [savingTracking, setSavingTracking] = useState(false);
         );
 
         toast.error(
-          `Status ${status} ho gaya, lekin customer email nahi ja saka.`
+          `Order marked as ${status}, but the customer email could not be sent.`
         );
         return;
       }
@@ -163,13 +174,14 @@ const [savingTracking, setSavingTracking] = useState(false);
 
         toast.error(
           emailData?.message ||
-            `Status ${status} ho gaya, lekin customer email nahi ja saka.`
+                `Order marked as ${status}, but the customer email could not be sent.`
+
         );
         return;
       }
 
       toast.success(
-        `Order ${status} ho gaya aur customer email send ho gaya.`
+        `Order marked as ${status} and customer email sent successfully.`
       );
       return;
     }
@@ -184,7 +196,7 @@ const [savingTracking, setSavingTracking] = useState(false);
     toast.dismiss();
     toast.error(
       statusError?.message ||
-        "Order status update nahi ho saka."
+        "Failed to update order status."
     );
   } finally {
     setUpdatingStatus(false);
@@ -476,6 +488,47 @@ return (
   matchesToDate
 );
 });
+const sortedOrders = [...filteredOrders].sort(
+  (firstOrder, secondOrder) => {
+    if (sortBy === "Oldest") {
+      return (
+        new Date(firstOrder.created_at || 0) -
+        new Date(secondOrder.created_at || 0)
+      );
+    }
+
+    if (sortBy === "Highest Amount") {
+      return (
+        Number(secondOrder.amount || 0) -
+        Number(firstOrder.amount || 0)
+      );
+    }
+
+    if (sortBy === "Lowest Amount") {
+      return (
+        Number(firstOrder.amount || 0) -
+        Number(secondOrder.amount || 0)
+      );
+    }
+
+    if (sortBy === "Customer A-Z") {
+      return String(
+        firstOrder.customer_name || ""
+      ).localeCompare(
+        String(secondOrder.customer_name || ""),
+        "en",
+        {
+          sensitivity: "base",
+        }
+      );
+    }
+
+    return (
+      new Date(secondOrder.created_at || 0) -
+      new Date(firstOrder.created_at || 0)
+    );
+  }
+);
 useEffect(() => {
   setCurrentPage(1);
 }, [
@@ -485,6 +538,7 @@ useEffect(() => {
   fromDate,
   toDate,
   ordersPerPage,
+  sortBy,
 ]);
 const totalPages = Math.max(
   Math.ceil(filteredOrders.length / ordersPerPage),
@@ -502,15 +556,187 @@ const startOrderIndex =
 const endOrderIndex =
   startOrderIndex + ordersPerPage;
 
-const paginatedOrders = filteredOrders.slice(
+const paginatedOrders = sortedOrders.slice(
   startOrderIndex,
   endOrderIndex
 );
+const currentPageOrderIds = paginatedOrders.map(
+  (order) => String(order.id)
+);
+
+const allCurrentPageSelected =
+  currentPageOrderIds.length > 0 &&
+  currentPageOrderIds.every((orderId) =>
+    selectedOrderIds.includes(orderId)
+  );
+
+function toggleOrderSelection(orderId) {
+  const normalizedOrderId = String(orderId);
+
+  setSelectedOrderIds((previousIds) =>
+    previousIds.includes(normalizedOrderId)
+      ? previousIds.filter(
+          (id) => id !== normalizedOrderId
+        )
+      : [...previousIds, normalizedOrderId]
+  );
+}
+
+function toggleCurrentPageSelection() {
+  setSelectedOrderIds((previousIds) => {
+    if (allCurrentPageSelected) {
+      return previousIds.filter(
+        (orderId) =>
+          !currentPageOrderIds.includes(orderId)
+      );
+    }
+
+    return Array.from(
+      new Set([
+        ...previousIds,
+        ...currentPageOrderIds,
+      ])
+    );
+  });
+}
+function getSelectedOrders() {
+  return orders.filter((order) =>
+    selectedOrderIds.includes(String(order.id))
+  );
+}
+async function bulkUpdateOrderStatus(status) {
+  if (selectedOrderIds.length === 0) {
+    toast.dismiss();
+    toast.error("Please select at least one order.");
+    return;
+  }
+if (status === "Shipped") {
+  const selectedOrders =
+    getSelectedOrders();
+
+  const ordersMissingTracking =
+    selectedOrders.filter(
+      (order) =>
+        !order.courier_name?.trim() ||
+        !order.tracking_number?.trim()
+    );
+
+  if (ordersMissingTracking.length > 0) {
+    toast.dismiss();
+   toast.error(
+  `${ordersMissingTracking.length} selected order(s) are missing courier or tracking details.`
+);
+    return;
+  }
+}
+  try {
+    setBulkUpdating(true);
+    toast.dismiss();
+
+    const { error: bulkUpdateError } = await supabase
+      .from("orders")
+      .update({
+        status,
+      })
+      .in("id", selectedOrderIds);
+
+    if (bulkUpdateError) {
+      throw bulkUpdateError;
+    }
+
+    setOrders((previousOrders) =>
+      previousOrders.map((order) =>
+        selectedOrderIds.includes(String(order.id))
+          ? {
+              ...order,
+              status,
+            }
+          : order
+      )
+    );
+
+    setSelectedOrderIds([]);
+
+    toast.success(
+      `${selectedOrderIds.length} order(s) marked as ${status}.`
+    );
+  } catch (bulkStatusError) {
+    console.error(
+      "Bulk status update error:",
+      bulkStatusError
+    );
+
+    toast.dismiss();
+    toast.error(
+      bulkStatusError?.message ||
+        "Failed to update the selected orders."
+    );
+  } finally {
+    setBulkUpdating(false);
+  }
+}
+async function deleteSelectedOrders() {
+  if (selectedOrderIds.length === 0) {
+    toast.dismiss();
+    toast.error("Please select at least one order.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Delete ${selectedOrderIds.length} selected order(s)? This action cannot be undone.`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    setBulkUpdating(true);
+    toast.dismiss();
+
+    const { error: deleteError } = await supabase
+      .from("orders")
+      .delete()
+      .in("id", selectedOrderIds);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    setOrders((previousOrders) =>
+      previousOrders.filter(
+        (order) =>
+          !selectedOrderIds.includes(String(order.id))
+      )
+    );
+
+    const deletedCount = selectedOrderIds.length;
+
+    setSelectedOrderIds([]);
+
+    toast.success(
+      `${deletedCount} selected order(s) deleted successfully.`
+    );
+  } catch (deleteError) {
+    console.error(
+      "Bulk delete error:",
+      deleteError
+    );
+
+    toast.dismiss();
+    toast.error(
+      deleteError?.message ||
+        "Failed to delete the selected orders."
+    );
+  } finally {
+    setBulkUpdating(false);
+  }
+}
 async function exportFilteredOrdersExcel() {
   if (filteredOrders.length === 0) {
     toast.dismiss();
     toast.error(
-      "Export karne ke liye koi matching order nahi hai."
+     "No matching orders found to export."
     );
     return;
   }
@@ -591,7 +817,7 @@ async function exportFilteredOrdersExcel() {
       },
     ];
 
-    filteredOrders.forEach((order) => {
+    sortedOrders.forEach((order) => {
       worksheet.addRow({
         orderId: order.id || "—",
         customer:
@@ -730,7 +956,7 @@ async function exportFilteredOrdersExcel() {
 
     toast.dismiss();
     toast.error(
-      "Filtered orders Excel me export nahi ho sake."
+      "Failed to export filtered orders."
     );
   }
 }
@@ -809,6 +1035,35 @@ async function exportFilteredOrdersExcel() {
         placeholder="Search customer, order ID, phone or payment ID..."
         className="w-full rounded-2xl border border-[#E7D8CA] bg-[#F8F5F1] px-5 py-3 font-body text-sm text-[#6B4F3A] outline-none transition placeholder:text-gray-400 focus:border-[#A67C52] focus:bg-white"
       />
+      <div className="mt-3">
+  <select
+    value={sortBy}
+    onChange={(event) =>
+      setSortBy(event.target.value)
+    }
+    className="w-full rounded-xl border border-[#E7D8CA] bg-white px-3 py-2 text-sm text-[#6B4F3A] outline-none"
+  >
+    <option value="Newest">
+      Newest First
+    </option>
+
+    <option value="Oldest">
+      Oldest First
+    </option>
+
+    <option value="Highest Amount">
+      Highest Amount
+    </option>
+
+    <option value="Lowest Amount">
+      Lowest Amount
+    </option>
+
+    <option value="Customer A-Z">
+      Customer A-Z
+    </option>
+  </select>
+</div>
       <div className="mt-3 flex gap-3">
   <select
     value={statusFilter}
@@ -890,6 +1145,66 @@ async function exportFilteredOrdersExcel() {
     </div>
   </div>
 </div>
+{selectedOrderIds.length > 0 && (
+  <div className="border-b border-[#E7D8CA] bg-[#F8F5F1] px-6 py-4">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+
+      <p className="text-sm font-medium text-[#6B4F3A]">
+        {selectedOrderIds.length} order(s) selected
+      </p>
+
+      <div className="flex flex-wrap gap-2">
+
+       <button
+  type="button"
+  onClick={() => bulkUpdateOrderStatus("Packed")}
+  disabled={bulkUpdating}
+  className="rounded-lg bg-yellow-500 px-3 py-2 text-sm text-white transition hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {bulkUpdating ? "Updating..." : "Packed"}
+</button>
+
+        <button
+  type="button"
+  onClick={() => bulkUpdateOrderStatus("Shipped")}
+  disabled={bulkUpdating}
+  className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {bulkUpdating ? "Updating..." : "Shipped"}
+</button>
+
+       <button
+  type="button"
+  onClick={() => bulkUpdateOrderStatus("Delivered")}
+  disabled={bulkUpdating}
+  className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {bulkUpdating ? "Updating..." : "Delivered"}
+</button>
+
+       <button
+  type="button"
+  onClick={() => bulkUpdateOrderStatus("Cancelled")}
+  disabled={bulkUpdating}
+  className="rounded-lg bg-red-600 px-3 py-2 text-sm text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {bulkUpdating ? "Updating..." : "Cancel"}
+</button>
+
+       <button
+  type="button"
+  onClick={deleteSelectedOrders}
+  disabled={bulkUpdating}
+  className="rounded-lg border border-red-600 px-3 py-2 text-sm text-red-600 transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {bulkUpdating ? "Deleting..." : "Delete"}
+</button>
+
+      </div>
+
+    </div>
+  </div>
+)}
 
           {filteredOrders.length === 0 ? (
             <div className="px-6 py-12 text-center">
@@ -904,6 +1219,15 @@ async function exportFilteredOrdersExcel() {
               <table className="w-full min-w-[1050px] text-left">
                 <thead className="bg-[#F8F5F1]">
                   <tr className="text-sm text-[#6B4F3A]">
+                  <th className="w-14 px-6 py-4">
+  <input
+    type="checkbox"
+    checked={allCurrentPageSelected}
+    onChange={toggleCurrentPageSelection}
+    aria-label="Select all orders on this page"
+    className="h-4 w-4 cursor-pointer accent-[#6B4F3A]"
+  />
+</th>
                     <th className="px-6 py-4">Customer</th>
                     <th className="px-6 py-4">Phone</th>
                     <th className="px-6 py-4">Amount</th>
@@ -921,6 +1245,19 @@ async function exportFilteredOrdersExcel() {
                       key={order.id}
                       className="border-t border-[#E7D8CA] text-sm text-gray-700"
                     >
+                    <td className="w-14 px-6 py-5">
+  <input
+    type="checkbox"
+    checked={selectedOrderIds.includes(
+      String(order.id)
+    )}
+    onChange={() =>
+      toggleOrderSelection(order.id)
+    }
+    aria-label={`Select order ${order.id}`}
+    className="h-4 w-4 cursor-pointer accent-[#6B4F3A]"
+  />
+</td>
                       <td className="px-6 py-5">
                         <p className="font-semibold text-[#6B4F3A]">
                           {order.customer_name || "Unknown"}

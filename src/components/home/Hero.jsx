@@ -46,35 +46,6 @@ export default function Hero() {
               Discover Our Story
             </a>
           </div>
-
-          <div className="mt-14 grid max-w-lg grid-cols-3 gap-5 border-t border-primary/15 pt-8">
-            <div>
-              <h2 className="font-heading text-3xl font-semibold text-primary">
-                500+
-              </h2>
-              <p className="mt-1 text-xs text-[#7A6D62] md:text-sm">
-                Happy Customers
-              </p>
-            </div>
-
-            <div>
-              <h2 className="font-heading text-3xl font-semibold text-primary">
-                150+
-              </h2>
-              <p className="mt-1 text-xs text-[#7A6D62] md:text-sm">
-                Unique Designs
-              </p>
-            </div>
-
-            <div>
-              <h2 className="font-heading text-3xl font-semibold text-primary">
-                100%
-              </h2>
-              <p className="mt-1 text-xs text-[#7A6D62] md:text-sm">
-                Handmade
-              </p>
-            </div>
-          </div>
         </motion.div>
 
         <motion.div

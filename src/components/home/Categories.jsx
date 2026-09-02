@@ -4,12 +4,24 @@ import { Link } from "react-router-dom";
 import bag12 from "../../assets/products/bag12.jpeg";
 import keychain1 from "../../assets/products/keychain1.jpeg";
 import pic2 from "../../assets/products/pic2.jpeg";
+import pic from "../../assets/products/pic.jpeg";
+import pic3 from "../../assets/products/pic3.jpeg";
 
 const categories = [
   {
     name: "Macrame Bags",
     image: bag12,
     category: "Bags",
+  },
+  {
+    name: "Wall Hangings",
+    image: pic,
+    category: "Wall Hangings",
+  },
+  {
+    name: "Coasters",
+    image: pic3,
+    category: "Coasters",
   },
   {
     name: "Keychains",
@@ -54,8 +66,14 @@ export default function Categories() {
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.25 }}
+          transition={{
+            duration: 0.7,
+            ease: "easeOut",
+          }}
+          viewport={{
+            once: true,
+            amount: 0.25,
+          }}
           className="text-center"
         >
           <p className="font-body text-xs uppercase tracking-[0.38em] text-secondary">
@@ -76,17 +94,24 @@ export default function Categories() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.18 }}
-          className="mt-16 grid gap-8 md:grid-cols-3"
+          viewport={{
+            once: true,
+            amount: 0.18,
+          }}
+          className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3"
         >
           {categories.map((item) => (
             <motion.div
               key={item.name}
               variants={cardVariants}
-              whileHover={{ y: -10 }}
+              whileHover={{
+                y: -10,
+              }}
             >
               <Link
-                to={`/shop?category=${item.category}`}
+                to={`/shop?category=${encodeURIComponent(
+                  item.category
+                )}`}
                 className="group block overflow-hidden rounded-[36px] bg-background shadow-lg transition duration-500 hover:shadow-2xl"
               >
                 <div className="relative h-[480px] overflow-hidden">
@@ -110,6 +135,7 @@ export default function Categories() {
 
                     <span className="mt-5 inline-flex items-center gap-2 font-body text-sm">
                       Explore Collection
+
                       <span className="transition duration-300 group-hover:translate-x-2">
                         →
                       </span>
