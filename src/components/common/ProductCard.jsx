@@ -21,7 +21,6 @@ export default function ProductCard({
   name,
   price,
   category = "Handmade",
-  bestseller = false,
 }) {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } =
@@ -42,7 +41,6 @@ export default function ProductCard({
       name,
       price,
       category,
-      bestseller,
     }),
     [
       id,
@@ -50,7 +48,6 @@ export default function ProductCard({
       name,
       price,
       category,
-      bestseller,
     ]
   );
 
@@ -171,12 +168,6 @@ export default function ProductCard({
               />
             )}
           </button>
-
-          {bestseller && (
-            <span className="absolute left-5 top-5 z-20 rounded-full bg-primary px-4 py-2 text-xs uppercase tracking-[0.2em] text-white">
-              Bestseller
-            </span>
-          )}
 
           <div className="absolute inset-0 z-10 flex items-end justify-center bg-black/30 opacity-0 transition duration-500 group-hover:opacity-100">
             <div className="mb-6 flex gap-3">
