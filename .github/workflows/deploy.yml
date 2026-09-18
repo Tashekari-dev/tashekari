@@ -12,16 +12,16 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           package-manager-cache: false
 
-     - name: Install Dependencies
-  run: npm install --include=optional
+      - name: Install Dependencies
+        run: npm install --include=optional
 
       - name: Build Project
         run: npm run build
