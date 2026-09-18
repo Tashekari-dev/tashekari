@@ -43,11 +43,7 @@ import WhatsAppButton from "./components/common/WhatsAppButton";
 import ScrollProgress from "./components/common/ScrollProgress";
 import CursorGlow from "./components/common/CursorGlow";
 import ScrollToTop from "./components/common/ScrollToTop";
-import PageLoader from "./components/common/PageLoader";
-
 function App() {
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
@@ -55,11 +51,6 @@ function App() {
 
     return () => clearTimeout(timer);
   }, []);
-
-  if (loading) {
-    return <PageLoader />;
-  }
-
   return (
     <>
       <CursorGlow />
