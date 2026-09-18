@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 import bag12 from "../../assets/products/bag12.jpeg";
-import keychain1 from "../../assets/products/keychain1.jpeg";
-import pic2 from "../../assets/products/pic2.jpeg";
-import pic from "../../assets/products/pic.jpeg";
+import accessoriesDisplay from "../../assets/products/accessories-display.jpeg";
+import keychainsDisplay from "../../assets/products/keychains-display.jpeg";
+import wallhangingDisplay from "../../assets/products/wallhanging-display.jpeg";
 import pic3 from "../../assets/products/pic3.jpeg";
 
 const categories = [
@@ -15,7 +15,7 @@ const categories = [
   },
   {
     name: "Wall Hangings",
-    image: pic,
+    image: wallhangingDisplay,
     category: "Wall Hangings",
   },
   {
@@ -25,12 +25,12 @@ const categories = [
   },
   {
     name: "Keychains",
-    image: keychain1,
+    image: keychainsDisplay,
     category: "Keychains",
   },
   {
     name: "Accessories",
-    image: pic2,
+    image: accessoriesDisplay,
     category: "Accessories",
   },
 ];
@@ -85,8 +85,8 @@ export default function Categories() {
           </h2>
 
           <p className="mx-auto mt-5 max-w-2xl font-body leading-8 text-[#75695F]">
-            Explore thoughtfully handcrafted pieces designed for everyday beauty,
-            meaningful gifting and warm living.
+            Explore thoughtfully handcrafted pieces designed for everyday
+            beauty, meaningful gifting and warm living.
           </p>
         </motion.div>
 
@@ -109,16 +109,13 @@ export default function Categories() {
               }}
             >
               <Link
-                to={`/shop?category=${encodeURIComponent(
-                  item.category
-                )}`}
+                to={`/shop?category=${encodeURIComponent(item.category)}`}
                 className="group block overflow-hidden rounded-[36px] bg-background shadow-lg transition duration-500 hover:shadow-2xl"
               >
                 <div className="relative h-[480px] overflow-hidden">
                   <img
                     src={item.image}
                     alt={item.name}
-                    loading="lazy"
                     className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110"
                   />
 

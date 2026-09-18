@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-import heroImage from "../../assets/images/hero.jpg";
+import heroImage from "../../assets/customisation/customisation-hero.png";
 
 export default function CustomHero() {
   return (
@@ -50,6 +50,7 @@ export default function CustomHero() {
               <p className="font-heading text-3xl font-semibold text-primary">
                 100%
               </p>
+
               <p className="mt-1 font-body text-xs text-[#75695F]">
                 Handmade
               </p>
@@ -59,6 +60,7 @@ export default function CustomHero() {
               <p className="font-heading text-3xl font-semibold text-primary">
                 Custom
               </p>
+
               <p className="mt-1 font-body text-xs text-[#75695F]">
                 Colours & Size
               </p>
@@ -68,6 +70,7 @@ export default function CustomHero() {
               <p className="font-heading text-3xl font-semibold text-primary">
                 Made
               </p>
+
               <p className="mt-1 font-body text-xs text-[#75695F]">
                 With Love
               </p>
@@ -87,15 +90,15 @@ export default function CustomHero() {
             <img
               src={heroImage}
               alt="Custom Tashekari macrame creation"
-              className="h-[520px] w-full rounded-[32px] object-cover md:h-[650px]"
+              className="h-[520px] w-full rounded-[32px] object-contain bg-[#F8F5F1] md:h-[650px]"
             />
 
-            <div className="absolute bottom-8 left-8 right-8 rounded-[28px] bg-white/90 p-6 shadow-xl backdrop-blur-md">
-              <p className="font-body text-xs uppercase tracking-[0.3em] text-secondary">
+            <div className="absolute bottom-4 left-4 right-4 rounded-[22px] bg-white/90 px-4 py-4 shadow-xl backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-6 sm:px-5 sm:py-5">
+              <p className="font-body text-[10px] uppercase tracking-[0.28em] text-secondary sm:text-xs">
                 Your Idea, Our Craft
               </p>
 
-              <h2 className="mt-2 font-heading text-3xl font-semibold text-primary">
+              <h2 className="mt-1.5 font-heading text-xl font-semibold leading-tight text-primary sm:text-2xl">
                 Designed especially for you
               </h2>
             </div>

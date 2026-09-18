@@ -46,7 +46,7 @@ import ScrollToTop from "./components/common/ScrollToTop";
 function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLoading(false);
+      
     }, 2200);
 
     return () => clearTimeout(timer);
