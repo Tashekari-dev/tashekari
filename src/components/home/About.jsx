@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-import bag14 from "../../assets/products/bag14.jpeg";
+import earthboundTaupeSlingBag from "../../assets/products/earthbound-taupe-sling-bag.jpeg";
 
 export default function About() {
   return (
@@ -27,10 +27,10 @@ export default function About() {
 
           <div className="relative overflow-hidden rounded-[40px] shadow-2xl">
             <img
-              src={bag14}
-              alt="Tashekari handmade macrame craftsmanship"
+              src={earthboundTaupeSlingBag}
+              alt="Earthbound Taupe Sling Bag by Tashekari"
               loading="lazy"
-              className="h-[560px] w-full object-cover transition duration-700 hover:scale-105"
+              className="h-[560px] w-full object-cover object-center transition duration-700 hover:scale-105"
             />
           </div>
 
@@ -99,3 +99,4 @@ export default function About() {
     </section>
   );
 }
+

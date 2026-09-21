@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import bag12 from "../../assets/products/bag12.jpeg";
+import earthboundTaupeSlingBag from "../../assets/products/earthbound-taupe-sling-bag.jpeg";
 
 export default function BrandStory() {
   return (
@@ -15,9 +15,9 @@ export default function BrandStory() {
           <div className="absolute -left-10 -top-10 h-72 w-72 rounded-full bg-[#EAD7C4] opacity-70 blur-[120px]" />
 
           <img
-            src={bag12}
+            src={earthboundTaupeSlingBag}
             alt="Tashekari"
-            className="relative h-[620px] w-full rounded-[40px] object-cover shadow-2xl"
+            className="h-full w-full object-cover object-center transition duration-700 hover:scale-105"
           />
         </motion.div>
 
@@ -48,3 +48,5 @@ export default function BrandStory() {
     </section>
   );
 }
+
+

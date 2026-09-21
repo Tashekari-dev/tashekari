@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-import bag12 from "../../assets/products/bag12.jpeg";
+import mintMuseMacrameBag from "../../assets/products/mint-muse-macrame-bag.jpeg";
 import heroKeychains from "../../assets/products/hero-keychains.jpeg";
 export default function Hero() {
   return (
@@ -56,9 +56,9 @@ export default function Hero() {
         >
           <div className="absolute right-6 top-0 h-[540px] w-[82%] overflow-hidden rounded-[42px] shadow-[0_30px_80px_rgba(0,0,0,0.18)] md:h-[680px]">
             <img
-              src={bag12}
+              src={mintMuseMacrameBag}
               alt="Tashekari handmade navy macrame bag"
-              className="h-full w-full object-cover transition duration-700 hover:scale-105"
+              className="h-full w-full rounded-[32px] object-cover object-center transition duration-700 hover:scale-105"
             />
           </div>
 
@@ -97,3 +97,5 @@ export default function Hero() {
     </section>
   );
 }
+
+

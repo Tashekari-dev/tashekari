@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-import bag12 from "../../assets/products/bag12.jpeg";
+import mintMuseMacrameBag from "../../assets/products/mint-muse-macrame-bag.jpeg";
 import accessoriesDisplay from "../../assets/products/accessories-display.jpeg";
 import keychainsDisplay from "../../assets/products/keychains-display.jpeg";
 import wallhangingDisplay from "../../assets/products/wallhanging-display.jpeg";
@@ -10,7 +10,7 @@ import pic3 from "../../assets/products/pic3.jpeg";
 const categories = [
   {
     name: "Macrame Bags",
-    image: bag12,
+    image: mintMuseMacrameBag,
     category: "Bags",
   },
   {
@@ -116,7 +116,7 @@ export default function Categories() {
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110"
+                    className="h-full w-full rounded-[0px] object-cover object-center transition duration-700 ease-out group-hover:scale-105"
                   />
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
@@ -147,3 +147,5 @@ export default function Categories() {
     </section>
   );
 }
+
+

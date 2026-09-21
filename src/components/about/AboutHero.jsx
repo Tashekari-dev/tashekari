@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-import bag12 from "../../assets/products/bag12.jpeg";
+import earthboundTaupeSlingBag from "../../assets/products/earthbound-taupe-sling-bag.jpeg";
 import mochaBloomKeychain from "../../assets/products/mocha-bloom-keychain.jpeg";
 
 export default function AboutHero() {
@@ -72,9 +72,9 @@ export default function AboutHero() {
         >
           <div className="absolute right-0 top-0 h-[520px] w-[82%] overflow-hidden rounded-[42px] shadow-2xl">
             <img
-              src={bag12}
+              src={earthboundTaupeSlingBag}
               alt="Tashekari handmade macrame bag"
-              className="h-full w-full object-cover transition duration-700 hover:scale-105"
+              className="h-full w-full object-cover object-center transition duration-700 hover:scale-105"
             />
           </div>
 
@@ -113,3 +113,5 @@ export default function AboutHero() {
     </section>
   );
 }
+
+
