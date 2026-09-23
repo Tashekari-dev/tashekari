@@ -5,7 +5,7 @@ import mintMuseMacrameBag from "../../assets/products/mint-muse-macrame-bag.jpeg
 import accessoriesDisplay from "../../assets/products/accessories-display.jpeg";
 import keychainsDisplay from "../../assets/products/keychains-display.jpeg";
 import wallhangingDisplay from "../../assets/products/wallhanging-display.jpeg";
-import pic3 from "../../assets/products/pic3.jpeg";
+import blushKnotAirPodHolder from "../../assets/products/Blush Knot AirPod Holder.jpeg";
 
 const categories = [
   {
@@ -19,10 +19,10 @@ const categories = [
     category: "Wall Hangings",
   },
   {
-    name: "Coasters",
-    image: pic3,
-    category: "Coasters",
-  },
+  name: "Coasters",
+  image: blushKnotAirPodHolder,
+  category: "Coasters",
+},
   {
     name: "Keychains",
     image: keychainsDisplay,
