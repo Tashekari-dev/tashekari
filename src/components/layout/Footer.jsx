@@ -244,10 +244,6 @@ export default function Footer() {
                 <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-body text-[10px] text-white/50">
                   Net Banking
                 </span>
-
-                <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-body text-[10px] text-white/50">
-                  COD
-                </span>
               </div>
 
               <button

@@ -51,7 +51,7 @@ const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
 const { cartItems, clearCart } = useCart();
 const { user, authLoading } = useAuth();
 
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("online");
   const [error, setError] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
@@ -808,36 +808,6 @@ clearCart();
                 </h2>
 
                 <div className="mt-8 grid gap-4">
-                  <label
-                    className={`cursor-pointer rounded-2xl border p-5 transition ${
-                      paymentMethod === "cod"
-                        ? "border-primary bg-background"
-                        : "border-primary/10"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="cod"
-                        checked={paymentMethod === "cod"}
-                        onChange={(event) =>
-                          setPaymentMethod(event.target.value)
-                        }
-                        className="mt-1"
-                      />
-
-                      <div>
-                        <h3 className="font-body font-semibold text-primary">
-                          Cash on Delivery
-                        </h3>
-
-                        <p className="mt-1 font-body text-sm text-[#75695F]">
-                          Pay when your Tashekari order arrives.
-                        </p>
-                      </div>
-                    </div>
-                  </label>
 
                   <label
                     className={`cursor-pointer rounded-2xl border p-5 transition ${
