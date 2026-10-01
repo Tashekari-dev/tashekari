@@ -52,13 +52,31 @@ function formatProduct(item) {
       image && array.indexOf(image) === index
   );
 
+  const rawPrice = Number(item.price || 0);
+
+  const rawFinalPrice =
+    item.final_price !== null &&
+    item.final_price !== undefined &&
+    item.final_price !== ""
+      ? Number(item.final_price)
+      : rawPrice;
+
+  const rawDiscount = Number(item.discount || 0);
+
   return {
     ...item,
-    raw_price: Number(item.price || 0),
 
-    price: `₹${Number(
-      item.price || 0
-    ).toLocaleString("en-IN")}`,
+    raw_price: rawPrice,
+
+    price: `₹${rawPrice.toLocaleString("en-IN")}`,
+
+    discount: rawDiscount,
+
+    raw_final_price: rawFinalPrice,
+
+    finalPrice: `₹${rawFinalPrice.toLocaleString(
+      "en-IN"
+    )}`,
 
     stock: Number(item.stock || 0),
 
@@ -302,17 +320,37 @@ export async function deleteProductImages(imageUrls) {
 function createProductPayload(productData) {
   return {
     name: productData.name?.trim() || "",
-    category: productData.category || "",
 
-    price: Number(productData.price || 0),
-    stock: Number(productData.stock || 0),
+    category:
+      productData.category || "",
+
+    price: Number(
+      productData.price || 0
+    ),
+
+    discount: Number(
+      productData.discount || 0
+    ),
+
+    final_price:
+      productData.finalPrice === "" ||
+      productData.finalPrice === null ||
+      productData.finalPrice === undefined
+        ? Number(productData.price || 0)
+        : Number(productData.finalPrice),
+
+    stock: Number(
+      productData.stock || 0
+    ),
 
     description:
       productData.description?.trim() || "",
 
-    image: productData.image || "",
+    image:
+      productData.image || "",
 
-    images: normalizeImages(productData.images),
+    images:
+      normalizeImages(productData.images),
 
     material:
       productData.material?.trim() || null,
@@ -323,12 +361,17 @@ function createProductPayload(productData) {
     weight:
       productData.weight?.trim() || null,
 
-    sku: productData.sku?.trim() || null,
+    sku:
+      productData.sku?.trim() || null,
 
-    tags: normalizeTags(productData.tags),
+    tags:
+      normalizeTags(productData.tags),
 
-    featured: Boolean(productData.featured),
-    bestseller: Boolean(productData.bestseller),
+    featured:
+      Boolean(productData.featured),
+
+    bestseller:
+      Boolean(productData.bestseller),
   };
 }
 
@@ -337,19 +380,26 @@ export async function createProduct(
   mainImageFile,
   galleryImageFiles = []
 ) {
-  let mainImageUrl = productData.image || "";
-  let galleryImageUrls = normalizeImages(
-    productData.images
-  );
+  let mainImageUrl =
+    productData.image || "";
+
+  let galleryImageUrls =
+    normalizeImages(
+      productData.images
+    );
 
   if (mainImageFile) {
     mainImageUrl =
-      await uploadProductImage(mainImageFile);
+      await uploadProductImage(
+        mainImageFile
+      );
   }
 
   if (galleryImageFiles.length > 0) {
     const uploadedGalleryImages =
-      await uploadProductImages(galleryImageFiles);
+      await uploadProductImages(
+        galleryImageFiles
+      );
 
     galleryImageUrls = [
       ...galleryImageUrls,
@@ -357,17 +407,19 @@ export async function createProduct(
     ];
   }
 
-  const productPayload = createProductPayload({
-    ...productData,
-    image: mainImageUrl,
-    images: galleryImageUrls,
-  });
+  const productPayload =
+    createProductPayload({
+      ...productData,
+      image: mainImageUrl,
+      images: galleryImageUrls,
+    });
 
-  const { data, error } = await supabase
-    .from("products")
-    .insert([productPayload])
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from("products")
+      .insert([productPayload])
+      .select()
+      .single();
 
   if (error) {
     throw error;
@@ -382,20 +434,26 @@ export async function updateProduct(
   mainImageFile,
   galleryImageFiles = []
 ) {
-  let mainImageUrl = productData.image || "";
+  let mainImageUrl =
+    productData.image || "";
 
-  let galleryImageUrls = normalizeImages(
-    productData.images
-  );
+  let galleryImageUrls =
+    normalizeImages(
+      productData.images
+    );
 
   if (mainImageFile) {
     mainImageUrl =
-      await uploadProductImage(mainImageFile);
+      await uploadProductImage(
+        mainImageFile
+      );
   }
 
   if (galleryImageFiles.length > 0) {
     const uploadedGalleryImages =
-      await uploadProductImages(galleryImageFiles);
+      await uploadProductImages(
+        galleryImageFiles
+      );
 
     galleryImageUrls = [
       ...galleryImageUrls,
@@ -403,18 +461,20 @@ export async function updateProduct(
     ];
   }
 
-  const productPayload = createProductPayload({
-    ...productData,
-    image: mainImageUrl,
-    images: galleryImageUrls,
-  });
+  const productPayload =
+    createProductPayload({
+      ...productData,
+      image: mainImageUrl,
+      images: galleryImageUrls,
+    });
 
-  const { data, error } = await supabase
-    .from("products")
-    .update(productPayload)
-    .eq("id", productId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from("products")
+      .update(productPayload)
+      .eq("id", productId)
+      .select()
+      .single();
 
   if (error) {
     throw error;
@@ -423,22 +483,27 @@ export async function updateProduct(
   return formatProduct(data);
 }
 
-export async function deleteProduct(productId) {
-  const { data: product, error: fetchError } =
-    await supabase
-      .from("products")
-      .select("image, images")
-      .eq("id", productId)
-      .maybeSingle();
+export async function deleteProduct(
+  productId
+) {
+  const {
+    data: product,
+    error: fetchError,
+  } = await supabase
+    .from("products")
+    .select("image, images")
+    .eq("id", productId)
+    .maybeSingle();
 
   if (fetchError) {
     throw fetchError;
   }
 
-  const { error: deleteError } = await supabase
-    .from("products")
-    .delete()
-    .eq("id", productId);
+  const { error: deleteError } =
+    await supabase
+      .from("products")
+      .delete()
+      .eq("id", productId);
 
   if (deleteError) {
     throw deleteError;
@@ -446,12 +511,16 @@ export async function deleteProduct(productId) {
 
   const imageUrls = [
     product?.image,
-    ...normalizeImages(product?.images),
+    ...normalizeImages(
+      product?.images
+    ),
   ].filter(Boolean);
 
   if (imageUrls.length > 0) {
     try {
-      await deleteProductImages(imageUrls);
+      await deleteProductImages(
+        imageUrls
+      );
     } catch (storageError) {
       console.error(
         "Product deleted, but image cleanup failed:",

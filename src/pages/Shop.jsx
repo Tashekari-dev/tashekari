@@ -611,16 +611,18 @@ useEffect(() => {
                         ),
                       }}
                     >
-                      <ProductCard
-                        id={product.id}
-                        image={product.image}
-                        name={product.name}
-                        price={product.price}
-                        category={product.category}
-                        bestseller={Boolean(
-                          product.bestseller
-                        )}
-                      />
+                     <ProductCard
+  id={product.id}
+  image={product.image}
+  name={product.name}
+  price={product.price}
+  discount={product.discount}
+  finalPrice={product.finalPrice}
+  category={product.category}
+  bestseller={Boolean(
+    product.bestseller
+  )}
+/>
                     </motion.div>
                   )
                 )}

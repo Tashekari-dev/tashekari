@@ -20,26 +20,31 @@ export default function ProductCard({
   image,
   name,
   price,
+  discount = 0,
+  finalPrice,
   category = "Handmade",
 }) {
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } =
-    useWishlist();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [added, setAdded] = useState(false);
-  const [showToast, setShowToast] =
-    useState(false);
+  const [showToast, setShowToast] = useState(false);
   const [reviews, setReviews] = useState([]);
 
   const toastTimer = useRef(null);
   const buttonTimer = useRef(null);
+
+  const sellingPrice = finalPrice || price;
 
   const product = useMemo(
     () => ({
       id,
       image,
       name,
-      price,
+      price: sellingPrice,
+      originalPrice: price,
+      discount,
+      finalPrice: sellingPrice,
       category,
     }),
     [
@@ -47,6 +52,8 @@ export default function ProductCard({
       image,
       name,
       price,
+      discount,
+      sellingPrice,
       category,
     ]
   );
@@ -213,8 +220,20 @@ export default function ProductCard({
 
           <div className="mt-5 flex items-end justify-between gap-4">
             <div>
-              <p className="text-xl font-semibold text-primary">
-                {price}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-body text-sm text-[#8A7B70] line-through">
+                  {price}
+                </span>
+
+                {discount > 0 && (
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 font-body text-[11px] font-semibold text-green-700">
+                    {discount}% OFF
+                  </span>
+                )}
+              </div>
+
+              <p className="mt-1 text-2xl font-semibold text-primary">
+                {sellingPrice}
               </p>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -230,9 +249,7 @@ export default function ProductCard({
                         key={star}
                         className={
                           star <=
-                          Math.round(
-                            averageRating
-                          )
+                          Math.round(averageRating)
                             ? "text-yellow-500"
                             : "text-gray-300"
                         }
@@ -274,6 +291,10 @@ export default function ProductCard({
 
               <p className="mt-1 truncate font-heading text-xl font-semibold text-primary">
                 {name}
+              </p>
+
+              <p className="mt-1 font-body text-sm text-[#75695F]">
+                {sellingPrice}
               </p>
 
               <Link

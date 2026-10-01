@@ -13,6 +13,8 @@ const EMPTY_FORM = {
   productName: "",
   category: "",
   price: "",
+  discount: "",
+  finalPrice: "",
   stock: "",
   description: "",
   material: "",
@@ -37,6 +39,8 @@ export default function Products() {
   const [productName, setProductName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
+  const [discount, setDiscount] = useState("");
+  const [finalPrice, setFinalPrice] = useState("");
   const [stock, setStock] = useState("");
   const [description, setDescription] = useState("");
   const [material, setMaterial] = useState("");
@@ -77,6 +81,8 @@ export default function Products() {
     setProductName(EMPTY_FORM.productName);
     setCategory(EMPTY_FORM.category);
     setPrice(EMPTY_FORM.price);
+    setDiscount(EMPTY_FORM.discount);
+    setFinalPrice(EMPTY_FORM.finalPrice);
     setStock(EMPTY_FORM.stock);
     setDescription(EMPTY_FORM.description);
     setMaterial(EMPTY_FORM.material);
@@ -124,7 +130,9 @@ export default function Products() {
     } catch (error) {
       console.error("Fetch products error:", error);
       toast.dismiss();
-      toast.error(error.message || "Products load nahi ho paye.");
+      toast.error(
+        error.message || "Products load nahi ho paye."
+      );
     } finally {
       setLoading(false);
     }
@@ -136,7 +144,9 @@ export default function Products() {
 
       const { data, error } = await supabase
         .from("collections")
-        .select("id, name, status, active, sort_order")
+        .select(
+          "id, name, status, active, sort_order"
+        )
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
 
@@ -144,9 +154,15 @@ export default function Products() {
 
       setCollections(data || []);
     } catch (error) {
-      console.error("Fetch collections error:", error);
+      console.error(
+        "Fetch collections error:",
+        error
+      );
       toast.dismiss();
-      toast.error(error.message || "Collections load nahi ho payi.");
+      toast.error(
+        error.message ||
+          "Collections load nahi ho payi."
+      );
     } finally {
       setCollectionsLoading(false);
     }
@@ -160,7 +176,9 @@ export default function Products() {
 
     if (error) throw error;
 
-    return (data || []).map((item) => item.collection_id);
+    return (data || []).map(
+      (item) => item.collection_id
+    );
   }
 
   async function saveProductCollections(productId) {
@@ -171,28 +189,41 @@ export default function Products() {
 
     if (deleteError) throw deleteError;
 
-    if (selectedCollectionIds.length === 0) return;
+    if (selectedCollectionIds.length === 0) {
+      return;
+    }
 
-    const rows = selectedCollectionIds.map((collectionId, index) => ({
-      product_id: productId,
-      collection_id: collectionId,
-      sort_order: index,
-    }));
+    const rows = selectedCollectionIds.map(
+      (collectionId, index) => ({
+        product_id: productId,
+        collection_id: collectionId,
+        sort_order: index,
+      })
+    );
 
-    const { error: insertError } = await supabase
-      .from("collection_products")
-      .insert(rows);
+    const { error: insertError } =
+      await supabase
+        .from("collection_products")
+        .insert(rows);
 
     if (insertError) throw insertError;
   }
 
   function parseGalleryImages(images) {
-    if (Array.isArray(images)) return images.filter(Boolean);
+    if (Array.isArray(images)) {
+      return images.filter(Boolean);
+    }
 
-    if (typeof images === "string" && images.trim()) {
+    if (
+      typeof images === "string" &&
+      images.trim()
+    ) {
       try {
         const parsed = JSON.parse(images);
-        return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+
+        return Array.isArray(parsed)
+          ? parsed.filter(Boolean)
+          : [];
       } catch {
         return [];
       }
@@ -204,20 +235,28 @@ export default function Products() {
   function toggleCollection(collectionId) {
     setSelectedCollectionIds((current) =>
       current.includes(collectionId)
-        ? current.filter((id) => id !== collectionId)
+        ? current.filter(
+            (id) => id !== collectionId
+          )
         : [...current, collectionId]
     );
   }
 
-  function removeExistingGalleryImage(imageUrl) {
+  function removeExistingGalleryImage(
+    imageUrl
+  ) {
     setExistingGalleryImages((current) =>
-      current.filter((image) => image !== imageUrl)
+      current.filter(
+        (image) => image !== imageUrl
+      )
     );
   }
 
   function removeNewGalleryFile(fileIndex) {
     setGalleryFiles((current) =>
-      current.filter((_, index) => index !== fileIndex)
+      current.filter(
+        (_, index) => index !== fileIndex
+      )
     );
   }
 
@@ -226,23 +265,46 @@ export default function Products() {
       !productName.trim() ||
       !category ||
       price === "" ||
+      finalPrice === "" ||
       stock === "" ||
       !description.trim()
     ) {
       toast.dismiss();
-      toast.error("Please fill all required fields.");
+      toast.error(
+        "Please fill all required fields."
+      );
       return false;
     }
 
     if (!editingId && !imageFile) {
       toast.dismiss();
-      toast.error("Please select a main product image.");
+      toast.error(
+        "Please select a main product image."
+      );
       return false;
     }
 
-    if (Number(price) < 0 || Number(stock) < 0) {
+    if (
+      Number(price) < 0 ||
+      Number(finalPrice) < 0 ||
+      Number(stock) < 0
+    ) {
       toast.dismiss();
-      toast.error("Price aur stock negative nahi ho sakte.");
+      toast.error(
+        "Price, final price aur stock negative nahi ho sakte."
+      );
+      return false;
+    }
+
+    if (
+      discount !== "" &&
+      (Number(discount) < 0 ||
+        Number(discount) > 100)
+    ) {
+      toast.dismiss();
+      toast.error(
+        "Discount 0 se 100 ke beech hona chahiye."
+      );
       return false;
     }
 
@@ -253,18 +315,43 @@ export default function Products() {
     return {
       name: productName.trim(),
       category,
+
       price: Number(price),
+
+      discount:
+        discount === ""
+          ? 0
+          : Number(discount),
+
+      finalPrice: Number(finalPrice),
+
       stock: Number(stock),
-      description: description.trim(),
-      material: material.trim(),
-      dimensions: dimensions.trim(),
-      weight: weight.trim(),
-      sku: sku.trim(),
+
+      description:
+        description.trim(),
+
+      material:
+        material.trim(),
+
+      dimensions:
+        dimensions.trim(),
+
+      weight:
+        weight.trim(),
+
+      sku:
+        sku.trim(),
+
       tags,
+
       featured,
+
       bestseller,
+
       image: editingImage,
-      images: existingGalleryImages,
+
+      images:
+        existingGalleryImages,
     };
   }
 
@@ -276,24 +363,37 @@ export default function Products() {
     try {
       setSaving(true);
 
-      const newProduct = await createProduct(
-        getProductPayload(),
-        imageFile,
-        galleryFiles
+      const newProduct =
+        await createProduct(
+          getProductPayload(),
+          imageFile,
+          galleryFiles
+        );
+
+      await saveProductCollections(
+        newProduct.id
       );
 
-      await saveProductCollections(newProduct.id);
-
       toast.dismiss();
-      toast.success("Product added successfully.");
+      toast.success(
+        "Product added successfully."
+      );
 
       setShowModal(false);
       resetForm();
+
       await fetchProducts();
     } catch (error) {
-      console.error("Error adding product:", error);
+      console.error(
+        "Error adding product:",
+        error
+      );
+
       toast.dismiss();
-      toast.error(error.message || "Unable to add product.");
+      toast.error(
+        error.message ||
+          "Unable to add product."
+      );
     } finally {
       setSaving(false);
     }
@@ -305,39 +405,99 @@ export default function Products() {
 
       setProductName(product.name || "");
       setCategory(product.category || "");
-      setPrice(product.price ?? "");
-      setStock(product.stock ?? "");
-      setDescription(product.description || "");
-      setMaterial(product.material || "");
-      setDimensions(product.dimensions || "");
-      setWeight(product.weight || "");
-      setSku(product.sku || "");
+
+      setPrice(
+        product.price ?? ""
+      );
+
+      setDiscount(
+        product.discount ?? ""
+      );
+
+      setFinalPrice(
+        product.final_price ??
+          product.price ??
+          ""
+      );
+
+      setStock(
+        product.stock ?? ""
+      );
+
+      setDescription(
+        product.description || ""
+      );
+
+      setMaterial(
+        product.material || ""
+      );
+
+      setDimensions(
+        product.dimensions || ""
+      );
+
+      setWeight(
+        product.weight || ""
+      );
+
+      setSku(
+        product.sku || ""
+      );
+
       setTags(
         Array.isArray(product.tags)
           ? product.tags.join(", ")
           : product.tags || ""
       );
-      setFeatured(Boolean(product.featured));
-      setBestseller(Boolean(product.bestseller));
 
-      setEditingImage(product.image || "");
+      setFeatured(
+        Boolean(product.featured)
+      );
+
+      setBestseller(
+        Boolean(product.bestseller)
+      );
+
+      setEditingImage(
+        product.image || ""
+      );
+
       setImageFile(null);
       setGalleryFiles([]);
-      setExistingGalleryImages(parseGalleryImages(product.images));
+
+      setExistingGalleryImages(
+        parseGalleryImages(
+          product.images
+        )
+      );
+
       setCollectionSearch("");
 
-      const ids = await loadProductCollections(product.id);
+      const ids =
+        await loadProductCollections(
+          product.id
+        );
+
       setSelectedCollectionIds(ids);
 
       setShowModal(true);
     } catch (error) {
-      console.error("Error loading product:", error);
+      console.error(
+        "Error loading product:",
+        error
+      );
+
       toast.dismiss();
-      toast.error(error.message || "Product details load nahi ho payi.");
+      toast.error(
+        error.message ||
+          "Product details load nahi ho payi."
+      );
     }
   }
 
-  async function handleUpdateProduct(event) {
+  async function handleUpdateProduct(
+    event
+  ) {
     event.preventDefault();
 
     if (!validateForm()) return;
@@ -352,18 +512,30 @@ export default function Products() {
         galleryFiles
       );
 
-      await saveProductCollections(editingId);
+      await saveProductCollections(
+        editingId
+      );
 
       toast.dismiss();
-      toast.success("Product updated successfully.");
+      toast.success(
+        "Product updated successfully."
+      );
 
       setShowModal(false);
       resetForm();
+
       await fetchProducts();
     } catch (error) {
-      console.error("Error updating product:", error);
+      console.error(
+        "Error updating product:",
+        error
+      );
+
       toast.dismiss();
-      toast.error(error.message || "Unable to update product.");
+      toast.error(
+        error.message ||
+          "Unable to update product."
+      );
     } finally {
       setSaving(false);
     }
@@ -375,24 +547,43 @@ export default function Products() {
     try {
       setDeleting(true);
 
-      const { error: mappingError } = await supabase
+      const {
+        error: mappingError,
+      } = await supabase
         .from("collection_products")
         .delete()
-        .eq("product_id", deleteProduct.id);
+        .eq(
+          "product_id",
+          deleteProduct.id
+        );
 
-      if (mappingError) throw mappingError;
+      if (mappingError) {
+        throw mappingError;
+      }
 
-      await deleteProductService(deleteProduct.id);
+      await deleteProductService(
+        deleteProduct.id
+      );
 
       toast.dismiss();
-      toast.success("Product deleted successfully.");
+      toast.success(
+        "Product deleted successfully."
+      );
 
       setDeleteProduct(null);
+
       await fetchProducts();
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error(
+        "Error deleting product:",
+        error
+      );
+
       toast.dismiss();
-      toast.error(error.message || "Unable to delete product.");
+      toast.error(
+        error.message ||
+          "Unable to delete product."
+      );
     } finally {
       setDeleting(false);
     }
@@ -408,7 +599,8 @@ export default function Products() {
             </h1>
 
             <p className="mt-2 text-gray-500">
-              Manage products, gallery images and collections.
+              Manage products, gallery images,
+              pricing and collections.
             </p>
           </div>
 
@@ -423,36 +615,73 @@ export default function Products() {
 
         <div className="overflow-hidden rounded-3xl bg-white shadow">
           <div className="border-b px-6 py-5">
-            Total Products: {products.length}
+            Total Products:{" "}
+            {products.length}
           </div>
 
           {loading ? (
-            <div className="p-10 text-center">Loading...</div>
+            <div className="p-10 text-center">
+              Loading...
+            </div>
           ) : products.length === 0 ? (
             <div className="p-10 text-center text-gray-500">
               No products found.
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-[900px] w-full">
+              <table className="min-w-[1100px] w-full">
                 <thead className="bg-[#F8F5F1]">
                   <tr>
-                    <th className="p-5 text-left">Image</th>
-                    <th className="p-5 text-left">Product</th>
-                    <th className="p-5 text-left">Category</th>
-                    <th className="p-5 text-left">Price</th>
-                    <th className="p-5 text-left">Stock</th>
-                    <th className="p-5 text-left">Gallery</th>
-                    <th className="p-5 text-left">Action</th>
+                    <th className="p-5 text-left">
+                      Image
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Product
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Category
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Price
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Discount
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Final Price
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Stock
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Gallery
+                    </th>
+
+                    <th className="p-5 text-left">
+                      Action
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {products.map((item) => {
-                    const galleryCount = parseGalleryImages(item.images).length;
+                    const galleryCount =
+                      parseGalleryImages(
+                        item.images
+                      ).length;
 
                     return (
-                      <tr key={item.id} className="border-t">
+                      <tr
+                        key={item.id}
+                        className="border-t"
+                      >
                         <td className="p-5">
                           <img
                             src={item.image}
@@ -468,20 +697,53 @@ export default function Products() {
 
                           {item.sku && (
                             <p className="mt-1 text-xs text-gray-500">
-                              SKU: {item.sku}
+                              SKU:{" "}
+                              {item.sku}
                             </p>
                           )}
                         </td>
 
-                        <td className="p-5">{item.category}</td>
-                        <td className="p-5">₹{item.price}</td>
+                        <td className="p-5">
+                          {item.category}
+                        </td>
+
+                        <td className="p-5">
+                          ₹
+                          {Number(
+                            item.price || 0
+                          ).toLocaleString(
+                            "en-IN"
+                          )}
+                        </td>
+
+                        <td className="p-5">
+                          {Number(
+                            item.discount || 0
+                          )}
+                          %
+                        </td>
+
+                        <td className="p-5 font-semibold text-[#6B4F3A]">
+                          ₹
+                          {Number(
+                            item.final_price ??
+                              item.price ??
+                              0
+                          ).toLocaleString(
+                            "en-IN"
+                          )}
+                        </td>
 
                         <td className="p-5">
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-medium ${
-                              Number(item.stock) > 5
+                              Number(
+                                item.stock
+                              ) > 5
                                 ? "bg-green-100 text-green-700"
-                                : Number(item.stock) > 0
+                                : Number(
+                                    item.stock
+                                  ) > 0
                                 ? "bg-amber-100 text-amber-700"
                                 : "bg-red-100 text-red-700"
                             }`}
@@ -490,13 +752,19 @@ export default function Products() {
                           </span>
                         </td>
 
-                        <td className="p-5">{galleryCount}</td>
+                        <td className="p-5">
+                          {galleryCount}
+                        </td>
 
                         <td className="p-5">
                           <div className="flex gap-2">
                             <button
                               type="button"
-                              onClick={() => handleEdit(item)}
+                              onClick={() =>
+                                handleEdit(
+                                  item
+                                )
+                              }
                               className="rounded-lg border px-4 py-2"
                             >
                               Edit
@@ -504,7 +772,11 @@ export default function Products() {
 
                             <button
                               type="button"
-                              onClick={() => setDeleteProduct(item)}
+                              onClick={() =>
+                                setDeleteProduct(
+                                  item
+                                )
+                              }
                               className="rounded-lg bg-red-500 px-4 py-2 text-white"
                             >
                               Delete
@@ -527,11 +799,15 @@ export default function Products() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold text-[#6B4F3A]">
-                  {editingId ? "Edit Product" : "Add Product"}
+                  {editingId
+                    ? "Edit Product"
+                    : "Add Product"}
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Main image, gallery and product details manage karo.
+                  Main image, gallery, pricing
+                  and product details manage
+                  karo.
                 </p>
               </div>
 
@@ -547,7 +823,9 @@ export default function Products() {
 
             <form
               onSubmit={
-                editingId ? handleUpdateProduct : handleAddProduct
+                editingId
+                  ? handleUpdateProduct
+                  : handleAddProduct
               }
               className="space-y-7"
             >
@@ -566,16 +844,22 @@ export default function Products() {
                       type="file"
                       accept="image/*"
                       onChange={(event) =>
-                        setImageFile(event.target.files?.[0] || null)
+                        setImageFile(
+                          event.target.files?.[0] ||
+                            null
+                        )
                       }
                       className="w-full rounded-xl border px-4 py-3"
                     />
 
-                    {(imageFile || editingImage) && (
+                    {(imageFile ||
+                      editingImage) && (
                       <img
                         src={
                           imageFile
-                            ? URL.createObjectURL(imageFile)
+                            ? URL.createObjectURL(
+                                imageFile
+                              )
                             : editingImage
                         }
                         alt="Main product preview"
@@ -594,60 +878,83 @@ export default function Products() {
                       accept="image/*"
                       multiple
                       onChange={(event) =>
-                        setGalleryFiles(Array.from(event.target.files || []))
+                        setGalleryFiles(
+                          Array.from(
+                            event.target.files ||
+                              []
+                          )
+                        )
                       }
                       className="w-full rounded-xl border px-4 py-3"
                     />
 
                     <p className="mt-2 text-xs text-gray-500">
-                      Multiple images select kar sakte ho. Har image 5 MB se kam ho.
+                      Multiple images select
+                      kar sakte ho. Har image
+                      5 MB se kam ho.
                     </p>
                   </div>
                 </div>
 
-                {(existingGalleryImages.length > 0 ||
+                {(existingGalleryImages.length >
+                  0 ||
                   galleryFiles.length > 0) && (
                   <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                    {existingGalleryImages.map((imageUrl) => (
-                      <div key={imageUrl} className="relative">
-                        <img
-                          src={imageUrl}
-                          alt="Existing gallery"
-                          className="h-32 w-full rounded-xl object-cover"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeExistingGalleryImage(imageUrl)
-                          }
-                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
+                    {existingGalleryImages.map(
+                      (imageUrl) => (
+                        <div
+                          key={imageUrl}
+                          className="relative"
                         >
-                          ×
-                        </button>
-                      </div>
-                    ))}
+                          <img
+                            src={imageUrl}
+                            alt="Existing gallery"
+                            className="h-32 w-full rounded-xl object-cover"
+                          />
 
-                    {galleryFiles.map((file, index) => (
-                      <div
-                        key={`${file.name}-${file.lastModified}`}
-                        className="relative"
-                      >
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="h-32 w-full rounded-xl object-cover"
-                        />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeExistingGalleryImage(
+                                imageUrl
+                              )
+                            }
+                            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )
+                    )}
 
-                        <button
-                          type="button"
-                          onClick={() => removeNewGalleryFile(index)}
-                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
+                    {galleryFiles.map(
+                      (file, index) => (
+                        <div
+                          key={`${file.name}-${file.lastModified}`}
+                          className="relative"
                         >
-                          ×
-                        </button>
-                      </div>
-                    ))}
+                          <img
+                            src={URL.createObjectURL(
+                              file
+                            )}
+                            alt={file.name}
+                            className="h-32 w-full rounded-xl object-cover"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeNewGalleryFile(
+                                index
+                              )
+                            }
+                            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
               </section>
@@ -667,7 +974,9 @@ export default function Products() {
                       type="text"
                       value={productName}
                       onChange={(event) =>
-                        setProductName(event.target.value)
+                        setProductName(
+                          event.target.value
+                        )
                       }
                       placeholder="Enter product name"
                       className="w-full rounded-xl border px-4 py-3 outline-none focus:border-[#6B4F3A]"
@@ -681,17 +990,37 @@ export default function Products() {
 
                     <select
                       value={category}
-                      onChange={(event) => setCategory(event.target.value)}
+                      onChange={(event) =>
+                        setCategory(
+                          event.target.value
+                        )
+                      }
                       className="w-full rounded-xl border px-4 py-3"
                     >
-                     <option value="">Select category</option>
-<option value="Bags">Bags</option>
-<option value="Keychains">Keychains</option>
-<option value="Accessories">Accessories</option>
-<option value="Bookmarks">Bookmarks</option>
-<option value="Wall Hangings">Wall Hangings</option>
-<option value="Coasters">Coasters</option>
-<option value="Home Decor">Home Decor</option>
+                      <option value="">
+                        Select category
+                      </option>
+                      <option value="Bags">
+                        Bags
+                      </option>
+                      <option value="Keychains">
+                        Keychains
+                      </option>
+                      <option value="Accessories">
+                        Accessories
+                      </option>
+                      <option value="Bookmarks">
+                        Bookmarks
+                      </option>
+                      <option value="Wall Hangings">
+                        Wall Hangings
+                      </option>
+                      <option value="Coasters">
+                        Coasters
+                      </option>
+                      <option value="Home Decor">
+                        Home Decor
+                      </option>
                     </select>
                   </div>
 
@@ -703,7 +1032,11 @@ export default function Products() {
                     <input
                       type="text"
                       value={sku}
-                      onChange={(event) => setSku(event.target.value)}
+                      onChange={(event) =>
+                        setSku(
+                          event.target.value
+                        )
+                      }
                       placeholder="Example: TSK-BAG-001"
                       className="w-full rounded-xl border px-4 py-3"
                     />
@@ -718,8 +1051,51 @@ export default function Products() {
                       type="number"
                       min="0"
                       value={price}
-                      onChange={(event) => setPrice(event.target.value)}
-                      placeholder="Enter price"
+                      onChange={(event) =>
+                        setPrice(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Example: 1349"
+                      className="w-full rounded-xl border px-4 py-3"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-medium text-[#6B4F3A]">
+                      Discount %
+                    </label>
+
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={discount}
+                      onChange={(event) =>
+                        setDiscount(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Example: 23"
+                      className="w-full rounded-xl border px-4 py-3"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-medium text-[#6B4F3A]">
+                      Final Selling Price *
+                    </label>
+
+                    <input
+                      type="number"
+                      min="0"
+                      value={finalPrice}
+                      onChange={(event) =>
+                        setFinalPrice(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Example: 1099"
                       className="w-full rounded-xl border px-4 py-3"
                     />
                   </div>
@@ -733,7 +1109,11 @@ export default function Products() {
                       type="number"
                       min="0"
                       value={stock}
-                      onChange={(event) => setStock(event.target.value)}
+                      onChange={(event) =>
+                        setStock(
+                          event.target.value
+                        )
+                      }
                       placeholder="Enter stock quantity"
                       className="w-full rounded-xl border px-4 py-3"
                     />
@@ -748,7 +1128,9 @@ export default function Products() {
                       rows="5"
                       value={description}
                       onChange={(event) =>
-                        setDescription(event.target.value)
+                        setDescription(
+                          event.target.value
+                        )
                       }
                       placeholder="Enter product description"
                       className="w-full resize-none rounded-xl border px-4 py-3"
@@ -771,7 +1153,11 @@ export default function Products() {
                     <input
                       type="text"
                       value={material}
-                      onChange={(event) => setMaterial(event.target.value)}
+                      onChange={(event) =>
+                        setMaterial(
+                          event.target.value
+                        )
+                      }
                       placeholder="Example: Premium cotton cord"
                       className="w-full rounded-xl border px-4 py-3"
                     />
@@ -786,7 +1172,9 @@ export default function Products() {
                       type="text"
                       value={dimensions}
                       onChange={(event) =>
-                        setDimensions(event.target.value)
+                        setDimensions(
+                          event.target.value
+                        )
                       }
                       placeholder="Example: 12 × 10 inches"
                       className="w-full rounded-xl border px-4 py-3"
@@ -801,7 +1189,11 @@ export default function Products() {
                     <input
                       type="text"
                       value={weight}
-                      onChange={(event) => setWeight(event.target.value)}
+                      onChange={(event) =>
+                        setWeight(
+                          event.target.value
+                        )
+                      }
                       placeholder="Example: 350 g"
                       className="w-full rounded-xl border px-4 py-3"
                     />
@@ -815,13 +1207,18 @@ export default function Products() {
                     <input
                       type="text"
                       value={tags}
-                      onChange={(event) => setTags(event.target.value)}
+                      onChange={(event) =>
+                        setTags(
+                          event.target.value
+                        )
+                      }
                       placeholder="bag, macrame, handmade, gifting"
                       className="w-full rounded-xl border px-4 py-3"
                     />
 
                     <p className="mt-2 text-xs text-gray-500">
-                      Har tag ko comma se separate karo.
+                      Har tag ko comma se
+                      separate karo.
                     </p>
                   </div>
                 </div>
@@ -836,7 +1233,9 @@ export default function Products() {
                   type="text"
                   value={collectionSearch}
                   onChange={(event) =>
-                    setCollectionSearch(event.target.value)
+                    setCollectionSearch(
+                      event.target.value
+                    )
                   }
                   placeholder="Search collections..."
                   className="mb-4 w-full rounded-xl border px-4 py-3"
@@ -847,43 +1246,53 @@ export default function Products() {
                     <div className="p-4 text-center text-gray-500">
                       Loading collections...
                     </div>
-                  ) : filteredCollections.length === 0 ? (
+                  ) : filteredCollections.length ===
+                    0 ? (
                     <div className="p-4 text-center text-gray-500">
                       No collections found.
                     </div>
                   ) : (
-                    filteredCollections.map((collection) => (
-                      <label
-                        key={collection.id}
-                        className="flex cursor-pointer items-center justify-between border-b px-4 py-3 hover:bg-[#F8F5F1]"
-                      >
-                        <div>
-                          <p className="font-medium text-[#6B4F3A]">
-                            {collection.name}
-                          </p>
+                    filteredCollections.map(
+                      (collection) => (
+                        <label
+                          key={collection.id}
+                          className="flex cursor-pointer items-center justify-between border-b px-4 py-3 hover:bg-[#F8F5F1]"
+                        >
+                          <div>
+                            <p className="font-medium text-[#6B4F3A]">
+                              {collection.name}
+                            </p>
 
-                          <p className="text-xs text-gray-500">
-                            {collection.status}
-                            {!collection.active ? " • Inactive" : ""}
-                          </p>
-                        </div>
+                            <p className="text-xs text-gray-500">
+                              {
+                                collection.status
+                              }
+                              {!collection.active
+                                ? " • Inactive"
+                                : ""}
+                            </p>
+                          </div>
 
-                        <input
-                          type="checkbox"
-                          checked={selectedCollectionIds.includes(
-                            collection.id
-                          )}
-                          onChange={() =>
-                            toggleCollection(collection.id)
-                          }
-                        />
-                      </label>
-                    ))
+                          <input
+                            type="checkbox"
+                            checked={selectedCollectionIds.includes(
+                              collection.id
+                            )}
+                            onChange={() =>
+                              toggleCollection(
+                                collection.id
+                              )
+                            }
+                          />
+                        </label>
+                      )
+                    )
                   )}
                 </div>
 
                 <p className="mt-2 text-sm text-[#A67C52]">
-                  Selected: {selectedCollectionIds.length}
+                  Selected:{" "}
+                  {selectedCollectionIds.length}
                 </p>
               </section>
 
@@ -893,7 +1302,9 @@ export default function Products() {
                     type="checkbox"
                     checked={featured}
                     onChange={(event) =>
-                      setFeatured(event.target.checked)
+                      setFeatured(
+                        event.target.checked
+                      )
                     }
                   />
                   Featured Product
@@ -904,7 +1315,9 @@ export default function Products() {
                     type="checkbox"
                     checked={bestseller}
                     onChange={(event) =>
-                      setBestseller(event.target.checked)
+                      setBestseller(
+                        event.target.checked
+                      )
                     }
                   />
                   Bestseller
@@ -946,7 +1359,8 @@ export default function Products() {
             </h2>
 
             <p className="mt-4 text-gray-600">
-              Are you sure you want to delete{" "}
+              Are you sure you want to
+              delete{" "}
               <span className="font-semibold text-[#6B4F3A]">
                 {deleteProduct.name}
               </span>
@@ -954,13 +1368,17 @@ export default function Products() {
             </p>
 
             <p className="mt-2 text-sm text-red-500">
-              Product, gallery images aur collection mappings delete ho jayengi.
+              Product, gallery images aur
+              collection mappings delete ho
+              jayengi.
             </p>
 
             <div className="mt-8 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setDeleteProduct(null)}
+                onClick={() =>
+                  setDeleteProduct(null)
+                }
                 disabled={deleting}
                 className="rounded-xl border border-[#6B4F3A] px-5 py-3 text-[#6B4F3A] disabled:opacity-60"
               >
@@ -969,11 +1387,15 @@ export default function Products() {
 
               <button
                 type="button"
-                onClick={handleDeleteProduct}
+                onClick={
+                  handleDeleteProduct
+                }
                 disabled={deleting}
                 className="rounded-xl bg-red-500 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {deleting ? "Deleting..." : "Delete Product"}
+                {deleting
+                  ? "Deleting..."
+                  : "Delete Product"}
               </button>
             </div>
           </div>
